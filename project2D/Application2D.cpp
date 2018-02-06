@@ -20,7 +20,14 @@ bool Application2D::startup() {
 	m_font = new aie::Font("./font/consolas.ttf", 32);
 	
 	m_physicsScene = new PhysicsScene();
+	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	m_physicsScene->SetTimeStep(0.01f);
+
+	Sphere* ball1 = new Sphere(glm::vec2(-20, 0), glm::vec2(10, 0), 4.0f, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball2 = new Sphere(glm::vec2(20, 0), glm::vec2(-10, 0), 3.0f, 5, glm::vec4(0, 1, 0, 1));
+
+	m_physicsScene->AddActor(ball1);
+	m_physicsScene->AddActor(ball2);
 
 	m_cameraX = 0;
 	m_cameraY = 0;
@@ -45,7 +52,6 @@ void Application2D::update(float deltaTime) {
 	aie::Gizmos::clear();
 
 	m_physicsScene->Update(deltaTime);
-	m_physicsScene->UpdateGizmo();
 
 	// use arrow keys to move camera
 	if (input->isKeyDown(aie::INPUT_KEY_UP))
@@ -76,9 +82,11 @@ void Application2D::draw() {
 	// begin drawing sprites
 	m_2dRenderer->begin();
 
+	m_physicsScene->UpdateGizmo();
 	static float aspectRatio = 16 / 9.f;
 	aie::Gizmos::draw2D(glm::ortho<float>(-100, 100, -100 / aspectRatio, 100 / aspectRatio, -1.0f, 1.0f));
 	
+
 	// output some text, uses the last used colour
 	char fps[32];
 	sprintf_s(fps, 32, "FPS: %i", getFPS());

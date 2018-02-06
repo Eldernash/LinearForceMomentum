@@ -1,7 +1,7 @@
 #pragma once
 #include "PhysicsObject.h"
 
-class RigidBody
+class RigidBody : public PhysicsObject
 {
 public:
 	RigidBody(ShapeType shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass);
@@ -12,7 +12,7 @@ public:
 	void ApplyForce(glm::vec2 force);
 	void ApplyForceToActor(RigidBody* actor2, glm::vec2 force);
 
-	virtual bool ChechCollision(PhysicsObject* pOther) = 0;
+	virtual bool CheckCollision(PhysicsObject* pOther) = 0;
 
 	glm::vec2 GetPosition() { return m_position; }
 	float getRotation() { return m_rotation; }

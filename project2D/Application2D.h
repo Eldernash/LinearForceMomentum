@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "Renderer2D.h"
 #include "PhysicsScene.h"
+#include "Sphere.h"
 
 class Application2D : public aie::Application {
 public:
