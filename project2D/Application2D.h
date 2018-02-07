@@ -4,6 +4,7 @@
 #include "Renderer2D.h"
 #include "PhysicsScene.h"
 #include "Sphere.h"
+#include "Plane.h"
 
 class Application2D : public aie::Application {
 public:

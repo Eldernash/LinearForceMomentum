@@ -12,10 +12,5 @@ void Sphere::Draw() {
 }
 
 bool Sphere::CheckCollision(PhysicsObject* pOther) {
-	Sphere* sOther = dynamic_cast<Sphere*>(pOther);
-	float radiai = m_radius + sOther->GetRadius();
-	float distance = glm::distance(m_position, sOther->GetPosition());
-	if (distance <= radiai) {
-		return true;
-	} else return false;
+	return true;
 }
