@@ -9,5 +9,9 @@ class Box
 public:
 	Box();
 	~Box();
+
+protected:
+	glm::vec2 m_position;
+
 };
 

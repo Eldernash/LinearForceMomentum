@@ -23,11 +23,24 @@ bool Application2D::startup() {
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Sphere* ball1 = new Sphere(glm::vec2(-20, 0), glm::vec2(10, 0), 3, 3, glm::vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(glm::vec2(20, 0), glm::vec2(-10, 0), 3, 3, glm::vec4(1, 0, 0, 1));
+	int ballAmount = 150;
+	for (int i = 0; i < ballAmount; i++) {
+		Sphere* sph = new Sphere(glm::vec2((rand() % 200) - 100, (rand() % 100) - 50), glm::vec2((rand() % 100) - 500, (rand() % 100) - 50), 3, 2, glm::vec4(0.1, 0.1, 0.1, 1));
+		m_physicsScene->AddActor(sph);
+	}
+	Sphere* ball1 = new Sphere(glm::vec2(-10, 0), glm::vec2(0, 0), 1000, 5, glm::vec4(1, 1, 0, 1));
 
 	m_physicsScene->AddActor(ball1);
-	m_physicsScene->AddActor(ball2);
+
+	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
+	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
+	Plane* line3 = new Plane(glm::vec2(0, 1), 50);
+	Plane* line4 = new Plane(glm::vec2(0, 1), -50);
+
+	m_physicsScene->AddActor(line1);
+	m_physicsScene->AddActor(line2);
+	m_physicsScene->AddActor(line3);
+	m_physicsScene->AddActor(line4);
 
 	m_cameraX = 0;
 	m_cameraY = 0;
@@ -52,19 +65,6 @@ void Application2D::update(float deltaTime) {
 	aie::Gizmos::clear();
 
 	m_physicsScene->Update(deltaTime);
-
-	// use arrow keys to move camera
-	if (input->isKeyDown(aie::INPUT_KEY_UP))
-		m_cameraY += 500.0f * deltaTime;
-
-	if (input->isKeyDown(aie::INPUT_KEY_DOWN))
-		m_cameraY -= 500.0f * deltaTime;
-
-	if (input->isKeyDown(aie::INPUT_KEY_LEFT))
-		m_cameraX -= 500.0f * deltaTime;
-
-	if (input->isKeyDown(aie::INPUT_KEY_RIGHT))
-		m_cameraX += 500.0f * deltaTime;
 
 	// exit the application
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))

@@ -1,5 +1,6 @@
 #include "PhysicsScene.h"
 #include "Sphere.h"
+#include "Plane.h"
 
 class Sphere;
 
@@ -33,31 +34,11 @@ void PhysicsScene::Update(float deltaTime) {
 	accumulatedTime += deltaTime;
 
 	while (accumulatedTime >= m_timeStep) {
-
 		CheckForCollision();
 		for (auto pActor : m_actors) {
 			pActor->FixedUpdate(m_gravity, m_timeStep);
 		}
 		accumulatedTime -= m_timeStep;
-
-		// check for collisions (ideally you'd want to have some sort of scene management)
-		for (auto pActor : m_actors) {
-			for (auto pOther : m_actors) {
-				if (pActor == pOther)
-				continue;
-				
-				if (std::find(dirty.begin(), dirty.end(), pActor) != dirty.end() && std::find(dirty.begin(), dirty.end(), pOther) != dirty.end())
-					continue;
-
-				//RigidBody* pRigid = dynamic_cast<RigidBody*>(pActor);
-				//if (pRigid->CheckCollision(pOther) == true) {
-				//	pRigid->ApplyForceToActor(dynamic_cast<RigidBody*>(pOther), pRigid->GetVelocity() * pRigid->getMass());
-				//	dirty.push_back(pRigid);
-				//	dirty.push_back(pOther);
-				//}
-			}
-		}
-		dirty.clear();
 	}
 }
 
@@ -99,55 +80,40 @@ void PhysicsScene::CheckForCollision() {
 }
 
 bool PhysicsScene::Plane2Plane (PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
-
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
+	Sphere* sphere = dynamic_cast<Sphere*>(obj1);
+	Plane* plane = dynamic_cast<Plane*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-		float radiai = sphere1->GetRadius(); + sphere2->GetRadius();
-		float distance = glm::distance(sphere1->GetPosition(), sphere1->GetPosition());
-		if (distance <= radiai) {
-			sphere1->ApplyForce(glm::vec2(5, 3));
-			sphere2->ApplyForce(glm::vec2(-5, -3));
+	// if successful test for collision
+	if (sphere != nullptr && plane != nullptr) {
+		glm::vec2 collisionNormal = plane->GetNormal();
+		float sphereToPlane = glm::dot(sphere->GetPosition(), plane->GetNormal()) - plane->GetDistance();
+		
+		// if behind plane, flip normal
+		if (sphereToPlane < 0) {
+			collisionNormal *= -1;
+			sphereToPlane *= -1;
 		}
+		float intersection = sphere->GetRadius() - sphereToPlane;
+		if (intersection > 0) {
+			plane->ResolveCollision(sphere);
+		}
+
 	}
+
 	return false;
 }
 
@@ -161,58 +127,29 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 		float radiai = sphere1->GetRadius() + sphere2->GetRadius();
 		float distance = glm::distance(sphere1->GetPosition(), sphere2->GetPosition());
 		if (distance <= radiai) {
-			sphere1->ApplyForce(glm::vec2(-5, 3));
-			sphere2->ApplyForce(glm::vec2(5, -3));
+			sphere1->ResolveCollision(sphere2);
 		}
 	}
 	return false;
 }
 
 bool PhysicsScene::Sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 
 bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-	// try to cast objects to sphere and sphere
-	Sphere* sphere1 = dynamic_cast<Sphere*>(obj1);
-	Sphere* sphere2 = dynamic_cast<Sphere*>(obj2);
 
-	// if we are successful then test for collision
-	if (sphere1 != nullptr && sphere2 != nullptr) {
-
-	}
 	return false;
 }
 

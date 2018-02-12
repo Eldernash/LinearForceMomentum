@@ -14,6 +14,8 @@ public:
 	virtual void Draw();
 	virtual bool CheckCollision(PhysicsObject* pOther);
 
+	void RicochetPerp();
+
 	float GetRadius() { return m_radius; }
 	glm::vec4 GetColour() { return m_colour; }
 

@@ -11,6 +11,10 @@ void Sphere::Draw() {
 	aie::Gizmos::add2DCircle(m_position, m_radius, 15, m_colour);
 }
 
+void Sphere::RicochetPerp() {
+	m_velocity = -m_velocity;
+}
+
 bool Sphere::CheckCollision(PhysicsObject* pOther) {
-	return true;
+	return false;
 }

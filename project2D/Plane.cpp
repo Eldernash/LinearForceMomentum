@@ -1,5 +1,5 @@
 #include "Plane.h"
-
+#include "RigidBody.h"
 
 
 Plane::Plane() : PhysicsObject(PLANE) {
@@ -7,7 +7,7 @@ Plane::Plane() : PhysicsObject(PLANE) {
 	m_distance = 0;
 }
 Plane::Plane(glm::vec2 normal, float distance) : PhysicsObject(PLANE) {
-	m_normal = normal;
+	m_normal = glm::normalize(normal);
 	m_distance = distance;
 }
 
@@ -31,4 +31,14 @@ void Plane::Draw() {
 
 void Plane::ResetPosition()
 {
+}
+
+void Plane::ResolveCollision(RigidBody* actor2) {
+
+	float elasticity = 1;
+	float j = glm::dot(-(1 + elasticity) * (actor2->GetVelocity()), m_normal) / glm::dot(m_normal, m_normal * (1 / actor2->getMass()));
+
+	glm::vec2 force = m_normal * j;
+
+	actor2->ApplyForce(force);
 }

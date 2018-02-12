@@ -1,7 +1,10 @@
 #pragma once
 #include <Gizmos.h>
+#include <glm\glm.hpp>
 
 #include "PhysicsObject.h"
+
+class RigidBody;
 
 class Plane : public PhysicsObject
 {
@@ -14,6 +17,8 @@ public:
 	virtual void Debug() {}
 	virtual void Draw();
 	virtual void ResetPosition();
+
+	void ResolveCollision(RigidBody* actor2);
 
 	glm::vec2 GetNormal() { return m_normal; }
 	float GetDistance() { return m_distance; }
