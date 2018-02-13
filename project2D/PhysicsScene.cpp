@@ -3,6 +3,7 @@
 #include "Plane.h"
 
 class Sphere;
+class Plane;
 
 PhysicsScene::PhysicsScene() : m_timeStep(0.01f), m_gravity(glm::vec2 (0,0)) {}
 
@@ -104,16 +105,15 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		
 		// if behind plane, flip normal
 		if (sphereToPlane < 0) {
-			collisionNormal *= -1;
+			//collisionNormal *= -1;
 			sphereToPlane *= -1;
 		}
 		float intersection = sphere->GetRadius() - sphereToPlane;
 		if (intersection > 0) {
-			plane->ResolveCollision(sphere);
+			glm::vec2 contact = sphere->GetPosition() + (collisionNormal * -sphere->GetRadius());
+			plane->ResolveCollision(sphere, contact);
 		}
-
 	}
-
 	return false;
 }
 
@@ -124,10 +124,8 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 	// if we are successful then test for collision
 	if (sphere1 != nullptr && sphere2 != nullptr) {
-		float radiai = sphere1->GetRadius() + sphere2->GetRadius();
-		float distance = glm::distance(sphere1->GetPosition(), sphere2->GetPosition());
-		if (distance <= radiai) {
-			sphere1->ResolveCollision(sphere2);
+		if (glm::distance(sphere1->GetPosition(), sphere2->GetPosition()) <= sphere1->GetRadius() + sphere2->GetRadius()) {
+			sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
 		}
 	}
 	return false;
@@ -157,7 +155,6 @@ void PhysicsScene::DebugScene() {
 	int count = 0;
 	for (auto pActor : m_actors) {
 		std::cout << count << " : ";
-		pActor->Debug();
 		count++;
 	}
 }

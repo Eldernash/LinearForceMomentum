@@ -1,10 +1,10 @@
 #include <glm\ext.hpp>
+#include <Gizmos.h>
 
 #include "Application2D.h"
 #include "Texture.h"
 #include "Font.h"
 #include "Input.h"
-#include <Gizmos.h>
 
 Application2D::Application2D() {}
 
@@ -23,14 +23,15 @@ bool Application2D::startup() {
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	m_physicsScene->SetTimeStep(0.01f);
 
-	int ballAmount = 150;
-	for (int i = 0; i < ballAmount; i++) {
-		Sphere* sph = new Sphere(glm::vec2((rand() % 200) - 100, (rand() % 100) - 50), glm::vec2((rand() % 100) - 500, (rand() % 100) - 50), 3, 2, glm::vec4(0.1, 0.1, 0.1, 1));
-		m_physicsScene->AddActor(sph);
-	}
-	Sphere* ball1 = new Sphere(glm::vec2(-10, 0), glm::vec2(0, 0), 1000, 5, glm::vec4(1, 1, 0, 1));
+	Sphere* ball1 = new Sphere(glm::vec2(-90, 3), glm::vec2(50, 0), 100, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball2 = new Sphere(glm::vec2(0, 0), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball3 = new Sphere(glm::vec2(0, 12), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball4 = new Sphere(glm::vec2(-10, 0), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
 
 	m_physicsScene->AddActor(ball1);
+	m_physicsScene->AddActor(ball2);
+	m_physicsScene->AddActor(ball3);
+	m_physicsScene->AddActor(ball4);
 
 	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
 	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
