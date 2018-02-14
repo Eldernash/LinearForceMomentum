@@ -174,13 +174,28 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 			}
 		}
 
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-
 		// we've had a hit - typically only two crners can contact
+		if (numContacts > 0) {
+			// get the average collision velocity into the plane (covers linear and rotational velocity of all corners involvde)
+			float collisionV = contactV / (float)numContacts;
+
+			// get the acceleration required to stop (restitution = 0) or reverse (restitution = 1) the average velocity into the plane
+			glm::vec2 acceleration = -plane->GetNormal() * ((1.0f + box->GetElasticity()) * collisionV);
+			
+			// and the average position at which we'll apply the force (corner or edge centre)
+			glm::vec2 localContact = (contact / (float)numContacts) - box->GetPosition();
+
+			// this is the perpendicular distance we apply the forve at relative to the COM, so torque = F*r
+			float r = glm::dot(localContact, glm::vec2(plane->GetNormal().y, -plane->GetNormal().x));
+
+			// work out the "effective mass" - this is a combination of moment of inertia and mass, and tells us how much the contact point velocity will change the force we're applying
+			float mass0 = 1.0f / (1.0f / box->getMass() + (r*r) / box->GetMoment());
+			
+			// and apply the force
+			box->ApplyForce(acceleration * mass0, localContact);
+		}
 	}
+	return false;
 }
 
 bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
