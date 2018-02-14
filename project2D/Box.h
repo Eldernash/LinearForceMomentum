@@ -4,14 +4,31 @@
 
 #include "RigidBody.h"
 
-class Box
+class Box : public RigidBody
 {
 public:
-	Box();
+	Box(glm::vec2 position, glm::vec2 ext, glm::vec2 velocity, float mass, glm::vec4 colour);
 	~Box();
 
+	void Draw();
+	void FixedUpdate(glm::vec2 gravity, float timeStep);
+
+	virtual bool CheckCollision(PhysicsObject* pOther);
+
+	float GetWidth() { return m_extents.x * 2; }
+	float GetHeight() { return m_extents.y * 2; }
+	glm::vec2 GetExtents() { return m_extents; }
+	glm::vec2 GetLocalX() { return m_localX; }
+	glm::vec2 GetLocalY() { return m_localY; }
+
 protected:
-	glm::vec2 m_position;
+
+	glm::vec2 m_extents; // the halfedge lengths
+	glm::vec4 m_colour;
+
+	// store the local x,y axes if the box based on its anfle of rotation
+	glm::vec2 m_localX;
+	glm::vec2 m_localY;
 
 };
 

@@ -1,9 +1,11 @@
 #include "PhysicsScene.h"
 #include "Sphere.h"
 #include "Plane.h"
+#include "Box.h"
 
 class Sphere;
 class Plane;
+class Box;
 
 PhysicsScene::PhysicsScene() : m_timeStep(0.01f), m_gravity(glm::vec2 (0,0)) {}
 
@@ -138,7 +140,47 @@ bool PhysicsScene::Sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
-	return false;
+	Box* box = dynamic_cast<Box*>(obj1);
+	Plane* plane = dynamic_cast<Plane*>(obj2);
+
+	// if we are successful then test for collision
+	if (box != nullptr && plane != nullptr) {
+		int numContacts = 0;
+		glm::vec2 contact(0, 0);
+		float contactV = 0;
+		float radius = 0.5f * std::fminf(box->GetWidth(), box->GetHeight());
+
+		// which side is the centre of mass on?
+		glm::vec2 planeOrigin = plane->GetNormal() * plane->GetDistance();
+		float comFromPlane = glm::dot(box->GetPosition() - planeOrigin, plane->GetNormal());
+
+		// check all four corners to see fi we've hit the plane
+		for (float x = -box->GetExtents().x; x < box->GetWidth(); x += box->GetWidth()) {
+			for (float y = -box->GetExtents().y; y < box->GetHeight(); y += box->GetHeight()) {
+				// get the position of the cotner in world space
+				glm::vec2 p = box->GetPosition() + x * box->GetLocalX() + y * box->GetLocalY();
+
+				float distFromPlane = glm::dot(p - planeOrigin, plane->GetNormal());
+
+				// this is the total velocity of the point
+				float velocityIntoPlane = glm::dot(box->GetVelocity() + box->getRotation() * (-y * box->GetLocalX() + x * box->GetLocalY()), plane->GetNormal());
+
+				// if this corner is on teh opposite side from the COM, and moving further in, we need to resolve the collision
+				if ((distFromPlane > 0 && comFromPlane < 0 && velocityIntoPlane > 0) || (distFromPlane < 0 && comFromPlane > 0 && velocityIntoPlane < 0)) {
+					numContacts++;
+					contact += p;
+					contactV += velocityIntoPlane;
+				}
+			}
+		}
+
+		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+
+		// we've had a hit - typically only two crners can contact
+	}
 }
 
 bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
