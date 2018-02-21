@@ -8,6 +8,7 @@ enum ShapeType {
 	BOX,
 	SHAPE_COUNT
 };
+	//SPRING,
 
 class PhysicsObject
 {
@@ -18,7 +19,9 @@ public:
 	virtual void FixedUpdate(glm::vec2 gravity, float timeStep) = 0;
 	virtual void Draw() = 0;
 	virtual void ResetPosition() {};
+	virtual float GetTotalEnergy(glm::vec2 gravity) { return 0; }
 	ShapeType GetShapeID() { return m_shapeID; }
+
 
 
 protected:

@@ -1,5 +1,6 @@
 #include <glm\ext.hpp>
 #include <Gizmos.h>
+#include <random>
 
 #include "Application2D.h"
 #include "Texture.h"
@@ -11,7 +12,8 @@ Application2D::Application2D() {}
 Application2D::~Application2D() {}
 
 bool Application2D::startup() {
-	
+	srand(time(NULL));
+
 	// increase the 2D line count to maximise the number of objects we can draw
 	aie::Gizmos::create(255U,255U,65535U,65535U);
 
@@ -23,20 +25,21 @@ bool Application2D::startup() {
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Sphere* ball1 = new Sphere(glm::vec2(-90, 3), glm::vec2(50, 0), 100, 5, glm::vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(glm::vec2(0, 0), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
-	Sphere* ball3 = new Sphere(glm::vec2(0, 12), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
-	Sphere* ball4 = new Sphere(glm::vec2(-10, 0), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball1 = new Sphere(glm::vec2(-50, 1), glm::vec2(200, 0), 1, 5, glm::vec4(1, 0, 0, 1));
 
-	Box* box = new Box(glm::vec2(-90, -30), glm::vec2(5, 5), glm::vec2(100, 0), 10, glm::vec4(0, 0, 1, 1));
+	Box* box1 = new Box(glm::vec2(50, 0), glm::vec2(10, 10), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
+	box1->SetKinematic(true);
 
-	m_physicsScene->AddActor(box);
-
-	m_physicsScene->AddActor(ball1);
-	m_physicsScene->AddActor(ball2);
-	m_physicsScene->AddActor(ball3);
-	m_physicsScene->AddActor(ball4);
-
+	int sphereAmount = 50;
+	for (int i = 0; i < sphereAmount; i++) {
+		Sphere* ball = new Sphere(glm::vec2((rand() % 190) - 100, (rand() % 80) - 50), glm::vec2((rand() % 200) - 10, (rand() % 20) - 10), 1, 3, glm::vec4(1, 0, 0, 1));
+		m_physicsScene->AddActor(ball);
+	}
+	int boxAmount = 50;
+	for (int i = 0; i < boxAmount; i++) {
+		Box* cube = new Box(glm::vec2((rand() % 190) - 100, (rand() % 80) - 50), glm::vec2(2, 2), glm::vec2((rand() % 200) - 10, (rand() % 20) - 10), 1, glm::vec4(0, 1, 0, 1));
+		m_physicsScene->AddActor(cube);
+	}
 	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
 	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
 	Plane* line3 = new Plane(glm::vec2(0, 1), 50);
@@ -70,6 +73,8 @@ void Application2D::update(float deltaTime) {
 	aie::Gizmos::clear();
 
 	m_physicsScene->Update(deltaTime);
+
+	std::cout << m_physicsScene->GetEnergy() << std::endl;
 
 	// exit the application
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))

@@ -28,20 +28,12 @@ void PhysicsScene::RemoveActor(PhysicsObject * actor) {
 }
 
 void PhysicsScene::Update(float deltaTime) {
-
-	static std::list<PhysicsObject*> dirty;
-
 	// update physics at a fixed time step
-
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += deltaTime;
-
-	while (accumulatedTime >= m_timeStep) {
-		CheckForCollision();
-		for (auto pActor : m_actors) {
-			pActor->FixedUpdate(m_gravity, m_timeStep);
-		}
-		accumulatedTime -= m_timeStep;
+	CheckForCollision();
+	for (auto pActor : m_actors) {
+		pActor->FixedUpdate(m_gravity, m_timeStep);
 	}
 }
 
@@ -61,7 +53,7 @@ static fn collisionFunctionArray[] = {
 	};
 
 void PhysicsScene::CheckForCollision() {
-	int actorCount = m_actors.size();
+	int actorCount = (int)m_actors.size();
 
 	// need to check for collisions against all objects except this one
 	for (int outer = 0; outer < actorCount - 1; outer++) {
@@ -83,17 +75,15 @@ void PhysicsScene::CheckForCollision() {
 }
 
 bool PhysicsScene::Plane2Plane (PhysicsObject* obj1, PhysicsObject* obj2) {
-
 	return false;
 }
 
 bool PhysicsScene::Plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
-
-	return false;
+	return Sphere2Plane(obj2, obj1);
 }
 
 bool PhysicsScene::Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-	return false;
+	return Box2Plane(obj1, obj2);
 }
 
 bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
@@ -134,14 +124,14 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 }
 
 bool PhysicsScene::Sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-
-	return false;
+	return Box2Sphere(obj2, obj1);
 }
 
 bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
+	Box *box = dynamic_cast<Box*>(obj1);
+	Plane *plane = dynamic_cast<Plane*>(obj2);
 
-	Box* box = dynamic_cast<Box*>(obj1);
-	Plane* plane = dynamic_cast<Plane*>(obj2);
+	float penetration = 0;
 
 	// if we are successful then test for collision
 	if (box != nullptr && plane != nullptr) {
@@ -154,43 +144,182 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		glm::vec2 planeOrigin = plane->GetNormal() * plane->GetDistance();
 		float comFromPlane = glm::dot(box->GetPosition() - planeOrigin, plane->GetNormal());
 
-		// check all four corners to see fi we've hit the plane
-		for (float x = -box->GetExtents().x; x < box->GetWidth(); x += box->GetWidth()) {
-			for (float y = -box->GetExtents().y; y < box->GetHeight(); y += box->GetHeight()) {
-				// get the position of the cotner in world space
+		// check all four corners to see if we've hit the plane
+		for (float x = -box->GetExtents().x; x<box->GetWidth(); x += box->GetWidth()) {
+			for (float y = -box->GetExtents().y; y<box->GetHeight(); y += box->GetHeight()) {
+				// get the position of the corner in world space
 				glm::vec2 p = box->GetPosition() + x * box->GetLocalX() + y * box->GetLocalY();
-
 				float distFromPlane = glm::dot(p - planeOrigin, plane->GetNormal());
 
 				// this is the total velocity of the point
-				float velocityIntoPlane = glm::dot(box->GetVelocity() + box->getRotation() * (-y * box->GetLocalX() + x * box->GetLocalY()), plane->GetNormal());
+				glm::vec2 pointVelocity = box->GetVelocity() + box->GetAngularVelocity() * (-y * box->GetLocalX() + x * box->GetLocalY());
+				float velocityIntoPlane = glm::dot(pointVelocity, plane->GetNormal());
 
-				// if this corner is on teh opposite side from the COM, and moving further in, we need to resolve the collision
+				// if this corner is on the opposite side from the COM, and moving further in, we need to resolve the collision
 				if ((distFromPlane > 0 && comFromPlane < 0 && velocityIntoPlane > 0) || (distFromPlane < 0 && comFromPlane > 0 && velocityIntoPlane < 0)) {
 					numContacts++;
 					contact += p;
 					contactV += velocityIntoPlane;
+
+					if (comFromPlane >= 0) {
+						if (penetration > distFromPlane) penetration = distFromPlane;
+					}
+					else { if (penetration < distFromPlane) penetration = distFromPlane; }
 				}
 			}
 		}
 
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
-		// HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE HERE
+		// we've had a hit - typically only two corners can contact
+		if (numContacts > 0) {
+			// get the average collision velocity into the plane (covers linear and rotational velocity of all corners involved)
+			float collisionV = contactV / (float)numContacts;
 
-		// we've had a hit - typically only two crners can contact
+			// get the acceleration required to stop (restitution = 0) or reverse (restitution = 1) the average velocity into the plane
+			glm::vec2 acceleration = -plane->GetNormal() * ((1.0f + box->GetElasticity()) * collisionV);
+
+			// and the average position at which we'll apply the force (corner or edge centre)
+			glm::vec2 localContact = (contact / (float)numContacts) - box->GetPosition();
+
+			// this is the perpendicular distance we apply the force at relative to the COM, to Torque = F*r
+			float r = glm::dot(localContact, glm::vec2(plane->GetNormal().y, -plane->GetNormal().x));
+
+			// work out the "effective mass"  this is  a combination of moment of inertia and mass, and tells us how much the contact point velocity will change with the force we're applying
+			float mass0 = 1.0f / (1.0f / box->GetMass() + (r*r) / box->GetMoment());
+
+			// and appky the force
+			box->ApplyForce(acceleration * mass0, localContact);
+
+			box->Nudge(-plane->GetNormal() * penetration);
+		}
 	}
+	return false;
 }
 
 bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
+	Box* box = dynamic_cast<Box*>(obj1);
+	Sphere* sphere = dynamic_cast<Sphere*>(obj2);
 
+	if (box != nullptr && sphere != nullptr) {
+		glm::vec2 circlePos = sphere->GetPosition() - box->GetPosition();
+		float w2 = box->GetWidth() / 2, h2 = box->GetHeight() / 2;
+
+		int numContacts = 0;
+		glm::vec2 contact(0, 0); // contact is in our box coordinates
+		glm::vec2 penVec(0, 0);
+
+		// check the four corners to see if any of them are inside the circle
+		for (float x = -w2; x <= w2; x += box->GetWidth()) {
+			for (float y = -h2; y <= h2; y += box->GetHeight()) {
+				glm::vec2 p = x * box->GetLocalX() + y * box->GetLocalY();
+				glm::vec2 dp = p - circlePos;
+				if (dp.x * dp.x + dp.y * dp.y < sphere->GetRadius() * sphere->GetRadius()) {
+					numContacts++;
+					contact += glm::vec2(x, y);
+				}
+			}
+		}
+		glm::vec2* direction = nullptr;
+		// get the local position of the circle centre
+		glm::vec2 localPos(glm::dot(box->GetLocalX(), circlePos), glm::dot(box->GetLocalY(), circlePos));
+		if (localPos.y < h2 && localPos.y > -h2) {
+			if (localPos.x > 0 && localPos.x < w2 + sphere->GetRadius()) {
+				numContacts++;
+				contact += glm::vec2(w2, localPos.y);
+				direction = new glm::vec2(box->GetLocalX());
+			}
+			if (localPos.x < 0 && localPos.x > -(w2 + sphere->GetRadius())) {
+				numContacts++;
+				contact += glm::vec2(-w2, localPos.y);
+				direction = new glm::vec2(-box->GetLocalX());
+			}
+		}
+		if (localPos.x < w2 && localPos.x > -w2) {
+			if (localPos.y > 0 && localPos.y < h2 + sphere->GetRadius()) {
+				numContacts++;
+				contact += glm::vec2(localPos.x, h2);
+				direction = new glm::vec2(box->GetLocalY());
+			}
+			if (localPos.y < 0 && localPos.y > -(h2 + sphere->GetRadius())) {
+				numContacts++;
+				contact += glm::vec2(localPos.x, -h2);
+				direction = new glm::vec2(-box->GetLocalY());
+			}
+		}
+		if (numContacts > 0) {
+			// average, and convert back into world coords
+			contact = box->GetPosition() + (1.0f / numContacts) * (box->GetLocalX() * contact.x + box->GetLocalY()*contact.y);
+
+			// with the contact point we can find a penetration vector
+
+
+			float distToContact = glm::length(contact - sphere->GetPosition());
+			float pen = sphere->GetRadius() - distToContact;
+			// fix for strange situation where contact point lies exactly on the sphere centre
+			if (distToContact == 0) {
+				penVec = glm::normalize(sphere->GetVelocity()) * pen;
+			} else {
+				penVec = glm::normalize(contact - sphere->GetPosition()) * pen;
+			}
+
+			// move each shape away in the direction of penetration
+			if (!box->IsKinematic() && !sphere->IsKinematic()) {
+				box->SetPosition(box->GetPosition() + penVec * 0.5f);
+				sphere->SetPosition(sphere->GetPosition() - penVec * 0.5f);
+				box->Nudge(penVec + 0.5f);
+				sphere->Nudge(-penVec + 0.5f);
+			}
+			else if (!box->IsKinematic()) {
+				box->Nudge(penVec);
+			}
+			else {
+				sphere->Nudge(-penVec);
+			}
+
+			box->ResolveCollision(sphere, contact, direction);
+		}
+		delete direction;
+	}
 	return false;
 }
 
-bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 
+bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
+	Box* box1 = dynamic_cast<Box*>(obj1);
+	Box* box2 = dynamic_cast<Box*>(obj2);
+
+	if (box1 != nullptr && box2 != nullptr) {
+		glm::vec2 boxPos = box2->GetPosition() - box1->GetPosition();
+
+		glm::vec2 norm(0, 0);
+		glm::vec2 contact(0, 0);
+		float pen = 0;
+		int numContacts = 0;
+
+		box1->CheckBoxCorners(*box2, contact, numContacts, pen, norm);
+
+		if (box2->CheckBoxCorners(*box1, contact, numContacts, pen, norm)) {
+			norm = -norm;
+		}
+
+		if (pen > 0){
+			box1->ResolveCollision(box2, contact / float(numContacts), &norm);
+
+			// apply contact forces
+			glm::vec2 displacement = pen * norm;
+			box1->Nudge(-displacement * 0.5f);
+			box2->Nudge(displacement * 0.5f);
+		}
+			return true;
+	}
 	return false;
+}
+
+float PhysicsScene::GetEnergy() {
+	float energy = 0;
+	for (auto pActor : m_actors) {
+		energy += pActor->GetTotalEnergy(m_gravity);
+	}
+	return energy;
 }
 
 void PhysicsScene::DebugScene() {

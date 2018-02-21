@@ -23,8 +23,9 @@ public:
 	glm::vec2 GetGravity() const { return m_gravity; }
 
 	void SetTimeStep(const float timeStep) { m_timeStep = timeStep; }
-	float GetTimeStep() const { return m_timeStep; }
 
+	float GetTimeStep() const { return m_timeStep; }
+	float GetEnergy();
 	std::vector<PhysicsObject*> GetActors() { return m_actors; }
 
 	void CheckForCollision();

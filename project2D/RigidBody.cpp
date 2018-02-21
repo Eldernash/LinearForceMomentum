@@ -17,7 +17,7 @@ RigidBody::~RigidBody() {
 
 void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
-	if (isKinematic) {
+	if (m_isKinematic) {
 		SetVelocity(glm::vec2(0, 0));
 	} else {
 		m_velocity += gravity * timeStep;
@@ -33,13 +33,17 @@ void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 }
 
 void RigidBody::ApplyForce(glm::vec2 force, glm::vec2 pos) {
-	if (isKinematic) return;
+	if (m_isKinematic) return;
+	
 	m_velocity += force / m_mass;
-	m_angularDrag += (force.y * pos.x - force.x * pos.y) / (m_moment);
+	m_angularVelocity += (force.y * pos.x - force.x * pos.y) / (m_moment);
 }
 
 void RigidBody::SetVelocity(glm::vec2 velocity) {
 	m_velocity = velocity;
+}
+void RigidBody::SetPosition(glm::vec2 position) {
+	m_position = position;
 }
 
 void RigidBody::ResolveCollision(RigidBody* actor2, glm::vec2 contact, glm::vec2* collisionNormal) {

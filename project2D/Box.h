@@ -8,6 +8,7 @@ class Box : public RigidBody
 {
 public:
 	Box(glm::vec2 position, glm::vec2 ext, glm::vec2 velocity, float mass, glm::vec4 colour);
+	Box(glm::vec2 position, glm::vec2 ext, glm::vec2 velocity, float mass, float aVec, glm::vec4 colour);
 	~Box();
 
 	void Draw();
@@ -20,6 +21,8 @@ public:
 	glm::vec2 GetExtents() { return m_extents; }
 	glm::vec2 GetLocalX() { return m_localX; }
 	glm::vec2 GetLocalY() { return m_localY; }
+
+	bool CheckBoxCorners(Box& box, glm::vec2& contact, int& numContacts, float& pen, glm::vec2& edgeNormal);
 
 protected:
 

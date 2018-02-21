@@ -14,12 +14,25 @@ public:
 	void ApplyForce(glm::vec2 force, glm::vec2 pos);
 	void ResolveCollision(RigidBody* actor2, glm::vec2 contact, glm::vec2* collisionNormal = nullptr);
 	void SetVelocity(glm::vec2 velocity);
+	void SetPosition(glm::vec2 position);
+	void SetKinematic(bool kin) { m_isKinematic = kin; }
+	void Nudge(glm::vec2 dx) { m_position += dx; }
 
-	float getMass() { if (isKinematic) return INT_MAX; else return m_mass; }
+	float GetMoment() { return m_moment; }
+	float GetMass() { if (m_isKinematic) return FLT_MAX; else return m_mass; }
 	float GetElasticity() { return m_elasticity; }
-	float getRotation() { return m_rotation; }
+	float GetRotation() { return m_rotation; }
 	float GetLinearDrag() { return m_linearDrag; }
 	float GetAngularDrag() { return m_angularDrag; }
+	float GetAngularVelocity() { return m_angularVelocity; }
+
+	float GetLinearEnergy() { return 0.5f*m_mass*glm::dot(m_velocity, m_velocity); }
+	float GetRotationalEnergy() { return 0.5f * m_moment * m_angularVelocity * m_angularVelocity; }
+	float GetGravityEnergy(glm::vec2 gravity) { return -m_mass * glm::dot(m_position, gravity); }
+
+	virtual float GetTotalEnergy(glm::vec2 gravity) { return this->GetLinearEnergy() + this->GetRotationalEnergy() + this->GetGravityEnergy(gravity); }
+
+	bool IsKinematic() { return m_isKinematic; }
 
 	glm::vec2 GetPosition() { return m_position; }
 	glm::vec2 GetVelocity() { return m_velocity; }
@@ -36,6 +49,6 @@ protected:
 	float m_angularVelocity;
 	float m_moment;
 
-	bool isKinematic;
+	bool m_isKinematic;
 
 };
