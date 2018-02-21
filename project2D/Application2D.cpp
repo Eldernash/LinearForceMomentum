@@ -22,20 +22,27 @@ bool Application2D::startup() {
 	m_font = new aie::Font("./font/consolas.ttf", 32);
 	
 	m_physicsScene = new PhysicsScene();
-	m_physicsScene->SetGravity(glm::vec2(0, 0));
+	m_physicsScene->SetGravity(glm::vec2(0, -80));
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Sphere* ball1 = new Sphere(glm::vec2(-50, 1), glm::vec2(200, 0), 1, 5, glm::vec4(1, 0, 0, 1));
+	Sphere* ball1 = new Sphere(glm::vec2(0, 30), glm::vec2(0, 0), 1, 5, glm::vec4(1, 1, 0, 1));
+	//Sphere* ball2 = new Sphere(glm::vec2(0, 1), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
 
-	Box* box1 = new Box(glm::vec2(50, 0), glm::vec2(10, 10), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
-	box1->SetKinematic(true);
+	m_physicsScene->AddActor(ball1);
+	//m_physicsScene->AddActor(ball2);
 
-	int sphereAmount = 50;
+	Box* box1 = new Box(glm::vec2(0, 20), glm::vec2(5, 5), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
+	Box* box2 = new Box(glm::vec2(0, 0), glm::vec2(5, 5), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
+
+	//m_physicsScene->AddActor(box1);
+	m_physicsScene->AddActor(box2);
+
+	int sphereAmount = 0;
 	for (int i = 0; i < sphereAmount; i++) {
 		Sphere* ball = new Sphere(glm::vec2((rand() % 190) - 100, (rand() % 80) - 50), glm::vec2((rand() % 200) - 10, (rand() % 20) - 10), 1, 3, glm::vec4(1, 0, 0, 1));
 		m_physicsScene->AddActor(ball);
 	}
-	int boxAmount = 50;
+	int boxAmount = 0;
 	for (int i = 0; i < boxAmount; i++) {
 		Box* cube = new Box(glm::vec2((rand() % 190) - 100, (rand() % 80) - 50), glm::vec2(2, 2), glm::vec2((rand() % 200) - 10, (rand() % 20) - 10), 1, glm::vec4(0, 1, 0, 1));
 		m_physicsScene->AddActor(cube);

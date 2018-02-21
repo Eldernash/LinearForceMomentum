@@ -95,15 +95,25 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		glm::vec2 collisionNormal = plane->GetNormal();
 		float sphereToPlane = glm::dot(sphere->GetPosition(), plane->GetNormal()) - plane->GetDistance();
 		
+		// which side is the centre of mass on?
+		glm::vec2 planeOrigin = plane->GetNormal() * plane->GetDistance();
+		float comFromPlane = glm::dot(sphere->GetPosition() - planeOrigin, plane->GetNormal());
+
 		// if behind plane, flip normal
 		if (sphereToPlane < 0) {
 			//collisionNormal *= -1;
 			sphereToPlane *= -1;
+
 		}
+
 		float intersection = sphere->GetRadius() - sphereToPlane;
 		if (intersection > 0) {
 			glm::vec2 contact = sphere->GetPosition() + (collisionNormal * -sphere->GetRadius());
+
 			plane->ResolveCollision(sphere, contact);
+
+			sphere->Nudge(plane->GetNormal() * intersection);
+
 		}
 	}
 	return false;
@@ -163,8 +173,7 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 					if (comFromPlane >= 0) {
 						if (penetration > distFromPlane) penetration = distFromPlane;
-					}
-					else { if (penetration < distFromPlane) penetration = distFromPlane; }
+					} else if (penetration < distFromPlane) penetration = distFromPlane;
 				}
 			}
 		}
@@ -261,27 +270,22 @@ bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 				penVec = glm::normalize(contact - sphere->GetPosition()) * pen;
 			}
 
+			box->ResolveCollision(sphere, contact, direction);	
+			
 			// move each shape away in the direction of penetration
 			if (!box->IsKinematic() && !sphere->IsKinematic()) {
-				box->SetPosition(box->GetPosition() + penVec * 0.5f);
-				sphere->SetPosition(sphere->GetPosition() - penVec * 0.5f);
-				box->Nudge(penVec + 0.5f);
-				sphere->Nudge(-penVec + 0.5f);
-			}
-			else if (!box->IsKinematic()) {
+				box->Nudge(penVec * 0.5f);
+				sphere->Nudge(-penVec * 0.5f);
+			} else if (!box->IsKinematic()) {
 				box->Nudge(penVec);
-			}
-			else {
+			} else {
 				sphere->Nudge(-penVec);
 			}
-
-			box->ResolveCollision(sphere, contact, direction);
 		}
 		delete direction;
 	}
 	return false;
 }
-
 
 bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 	Box* box1 = dynamic_cast<Box*>(obj1);
