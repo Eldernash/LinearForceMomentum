@@ -40,6 +40,7 @@ bool Application2D::startup() {
 		Box* cube = new Box(glm::vec2((rand() % 190) - 100, (rand() % 80) - 50), glm::vec2(2, 2), glm::vec2((rand() % 200) - 10, (rand() % 20) - 10), 1, glm::vec4(0, 1, 0, 1));
 		m_physicsScene->AddActor(cube);
 	}
+
 	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
 	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
 	Plane* line3 = new Plane(glm::vec2(0, 1), 50);

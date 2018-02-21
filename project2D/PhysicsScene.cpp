@@ -168,10 +168,10 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 				}
 			}
 		}
-
-		// we've had a hit - typically only two corners can contact
+		// we've had a hit - typically only two crners can contact
 		if (numContacts > 0) {
-			// get the average collision velocity into the plane (covers linear and rotational velocity of all corners involved)
+			// get the average collision velocity into the plane (covers linear and rotational velocity of all corners involvde)
+
 			float collisionV = contactV / (float)numContacts;
 
 			// get the acceleration required to stop (restitution = 0) or reverse (restitution = 1) the average velocity into the plane

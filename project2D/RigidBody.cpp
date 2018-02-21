@@ -6,7 +6,7 @@ const float MIN_ANGULAR_THRESHOLD = 0.1f;
 RigidBody::RigidBody(ShapeType shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass) : PhysicsObject(shapeID) {
 	m_position = position;
 	m_velocity = velocity;
-	m_rotation = 0;
+	m_rotation = 1;
 	m_angularVelocity = 0;
 	m_mass = mass;
 }
