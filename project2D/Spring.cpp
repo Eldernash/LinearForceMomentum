@@ -1,7 +1,7 @@
 #include "Spring.h"
 #include "RigidBody.h"
 
-Spring::Spring() : PhysicsObject(BOX) {};
+Spring::Spring(RigidBody* bpdy1, RigidBody* body2, float restLegnth, float springCoefficient, float damping = 0.1f, glm::vec2 contact1 = glm::vec2(0, 0), glm::vec2 contact2 = glm::vec2(0, 0)) : PhysicsObject(SPRING) {};
 Spring::~Spring() {};
 
 void Spring::FixedUpdate(glm::vec2 gravity, float timeStep) {
@@ -19,4 +19,7 @@ void Spring::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
 	m_body1->ApplyForce(-force * timeStep, p1 - m_body1->GetPosition());
 	m_body2->ApplyForce(-force * timeStep, p2 - m_body2->GetPosition());
+}
+
+void Spring::Draw() {
 }

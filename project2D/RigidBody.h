@@ -16,6 +16,7 @@ public:
 	void SetVelocity(glm::vec2 velocity);
 	void SetPosition(glm::vec2 position);
 	void SetKinematic(bool kin) { m_isKinematic = kin; }
+	void SetElasticity(float elasticity) { m_elasticity = elasticity; }
 	void Nudge(glm::vec2 dx) { m_position += dx; }
 
 	float GetMoment() { return m_moment; }

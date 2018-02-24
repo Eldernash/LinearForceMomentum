@@ -3,7 +3,7 @@
 #include <glm\glm.hpp>
 
 enum ShapeType {
-	JOINT = -1,
+	SPRING = -1,
 	PLANE = 0,
 	SPHERE,
 	BOX,

@@ -25,19 +25,38 @@ bool Application2D::startup() {
 	m_physicsScene->SetGravity(glm::vec2(0, 0));
 	m_physicsScene->SetTimeStep(0.01f);
 
-	Sphere* ball1 = new Sphere(glm::vec2(0, 0), glm::vec2(0, 100), 1, 5, glm::vec4(1, 1, 0, 1));
+	//Sphere* ball1 = new Sphere(glm::vec2(0, 0), glm::vec2(0, 100), 1, 5, glm::vec4(1, 1, 0, 1));
 	//Sphere* ball2 = new Sphere(glm::vec2(0, 1), glm::vec2(0, 0), 1, 5, glm::vec4(1, 0, 0, 1));
 
-	m_physicsScene->AddActor(ball1);
+	//m_physicsScene->AddActor(ball1);
 	//m_physicsScene->AddActor(ball2);
 
-	Box* box1 = new Box(glm::vec2(-20, 7), glm::vec2(5, 5), glm::vec2(100, 0), 2, glm::vec4(0, 0, 1, 1));
-	Box* box2 = new Box(glm::vec2(50, -2), glm::vec2(5, 5), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
-	box2->SetKinematic(true);
+	//Box* box1 = new Box(glm::vec2(-20, 7), glm::vec2(5, 5), glm::vec2(100, 0), 2, glm::vec4(0, 0, 1, 1));
+	//Box* box2 = new Box(glm::vec2(50, -2), glm::vec2(5, 5), glm::vec2(0, 0), 2, glm::vec4(0, 0, 1, 1));
+	//box2->SetKinematic(true);
 
 	//m_physicsScene->AddActor(box1);
 	//m_physicsScene->AddActor(box2);
 
+	int startX = -50;
+	Sphere* ball1;
+	Sphere* ball2;
+	float ballRadius = 2;
+	float mass = 1;
+	ball1 = new Sphere(glm::vec2(startX, 40), glm::vec2(0, 0), mass, ballRadius, glm::vec4(1, 1, 1, 1));
+
+	ball1->SetElasticity(0.9f);
+	ball1->SetKinematic(true);
+	m_physicsScene->AddActor(ball1);
+
+	int numberBalls = 10;
+	for (int i = 0; i < numberBalls; i++) {
+		ball2 = new Sphere(glm::vec2(startX + i * 9.0f, 40), glm::vec2(0,0), mass, ballRadius, glm::vec4(1, 1, 1, 1));
+		ball2->SetElasticity(0.9f);
+		m_physicsScene->AddActor(ball2);
+		m_physicsScene->AddActor(new Spring(ball1, ball2, 5, 10, 0.1f));
+		ball1 = ball2
+	}
 
 	int sphereAmount = 0;
 	for (int i = 0; i < sphereAmount; i++) {
