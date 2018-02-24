@@ -13,9 +13,7 @@ Plane::Plane(glm::vec2 normal, float distance) : PhysicsObject(PLANE) {
 
 Plane::~Plane() {}
 
-void Plane::FixedUpdate(glm::vec2 gravity, float timeStep)
-{
-}
+void Plane::FixedUpdate(glm::vec2 gravity, float timeStep) {}
 
 void Plane::Draw() {
 	float lineSegmentLength = 300;
@@ -29,16 +27,13 @@ void Plane::Draw() {
 	aie::Gizmos::add2DLine(start, end, colour);
 }
 
-void Plane::ResetPosition()
-{
-}
+void Plane::ResetPosition() {}
 
 void Plane::ResolveCollision(RigidBody* actor2, glm::vec2 contact) {
 
 	// the plane isn't moving, so the relative velocity is just actor2's velocity
-	glm::vec2 vRel = actor2->GetVelocity();
-	float e = actor2->GetElasticity();
-	float j = glm::dot(-(1 + e) * (vRel), m_normal) / (1 / actor2->GetMass());
+	glm::vec2 relativeVelocity = actor2->GetVelocity();
+	float j = glm::dot(-(1 + actor2->GetElasticity()) * (relativeVelocity), m_normal) / (1 / actor2->GetMass());
 	glm::vec2 force = m_normal * j;
 
 	actor2->ApplyForce(force, contact - actor2->GetPosition());

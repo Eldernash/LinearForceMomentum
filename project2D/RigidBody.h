@@ -26,6 +26,7 @@ public:
 	float GetAngularDrag() { return m_angularDrag; }
 	float GetAngularVelocity() { return m_angularVelocity; }
 
+	// returns the relevant energy
 	float GetLinearEnergy() { return 0.5f*m_mass*glm::dot(m_velocity, m_velocity); }
 	float GetRotationalEnergy() { return 0.5f * m_moment * m_angularVelocity * m_angularVelocity; }
 	float GetGravityEnergy(glm::vec2 gravity) { return -m_mass * glm::dot(m_position, gravity); }
@@ -36,11 +37,9 @@ public:
 
 	glm::vec2 GetPosition() { return m_position; }
 	glm::vec2 GetVelocity() { return m_velocity; }
+	glm::vec2 ToWorld(glm::vec2 contact);
 
 protected:
-	glm::vec2 m_position;
-	glm::vec2 m_velocity;
-
 	float m_mass;
 	float m_elasticity;
 	float m_rotation; // 2D so we only need a single float to represent out rotation
@@ -50,5 +49,12 @@ protected:
 	float m_moment;
 
 	bool m_isKinematic;
+
+	glm::vec2 m_position;
+	glm::vec2 m_velocity;
+
+	// store the local x,y axes if the box based on its anfle of rotation
+	glm::vec2 m_localX;
+	glm::vec2 m_localY;
 
 };

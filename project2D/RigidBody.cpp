@@ -17,8 +17,15 @@ RigidBody::~RigidBody() {
 
 void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
+	//store the local axes
+	float cs = cosf(m_rotation);
+	float sn = sinf(m_rotation);
+	m_localX = glm::normalize(glm::vec2(cs, sn));
+	m_localY = glm::normalize(glm::vec2(-sn, cs));
+
 	if (m_isKinematic) {
 		SetVelocity(glm::vec2(0, 0));
+		return;
 	} else {
 		m_velocity += gravity * timeStep;
 		m_position += m_velocity * timeStep;
@@ -33,10 +40,12 @@ void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 }
 
 void RigidBody::ApplyForce(glm::vec2 force, glm::vec2 pos) {
-	if (m_isKinematic) return;
-	
-	m_velocity += force / m_mass;
-	m_angularVelocity += (force.y * pos.x - force.x * pos.y) / (m_moment);
+	if (m_isKinematic) {
+		return;
+	} else {
+		m_velocity += force / m_mass;
+		m_angularVelocity += (force.y * pos.x - force.x * pos.y) / (m_moment);
+	}
 }
 
 void RigidBody::SetVelocity(glm::vec2 velocity) {
@@ -77,4 +86,8 @@ void RigidBody::ResolveCollision(RigidBody* actor2, glm::vec2 contact, glm::vec2
 	ApplyForce(-force, contact - m_position);
 	actor2->ApplyForce(force, contact - actor2->m_position);
 	}
+}
+
+glm::vec2 RigidBody::ToWorld(glm::vec2 contact) {
+	return m_position + m_localX * contact.x + m_localY * contact.y;
 }

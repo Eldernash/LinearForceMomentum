@@ -63,6 +63,10 @@ void PhysicsScene::CheckForCollision() {
 			int shapeId1 = object1->GetShapeID();
 			int shapeId2 = object2->GetShapeID();
 
+			if (shapeId1 < 0 || shapeId2 < 0) {
+				continue;
+			}
+
 			// using funciton pointers
 			int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
 			fn collisionFunctionsPtr = collisionFunctionArray[functionIdx];
@@ -101,7 +105,7 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 		// if behind plane, flip normal
 		if (sphereToPlane < 0) {
-			//collisionNormal *= -1;
+			collisionNormal *= -1;
 			sphereToPlane *= -1;
 
 		}
@@ -110,10 +114,10 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		if (intersection > 0) {
 			glm::vec2 contact = sphere->GetPosition() + (collisionNormal * -sphere->GetRadius());
 
+			sphere->Nudge(plane->GetNormal() * intersection * collisionNormal);
 			plane->ResolveCollision(sphere, contact);
 
-			sphere->Nudge(plane->GetNormal() * intersection);
-
+			return true;
 		}
 	}
 	return false;
@@ -148,7 +152,8 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		int numContacts = 0;
 		glm::vec2 contact(0, 0);
 		float contactV = 0;
-		float radius = 0.5f * std::fminf(box->GetWidth(), box->GetHeight());
+		//float radius = 0.5f * std::fminf(box->GetWidth(), box->GetHeight());
+		float radius = 0.5f * std::fminf(box->GetExtents().x, box->GetExtents().y);
 
 		// which side is the centre of mass on?
 		glm::vec2 planeOrigin = plane->GetNormal() * plane->GetDistance();
@@ -164,6 +169,7 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 				// this is the total velocity of the point
 				glm::vec2 pointVelocity = box->GetVelocity() + box->GetAngularVelocity() * (-y * box->GetLocalX() + x * box->GetLocalY());
 				float velocityIntoPlane = glm::dot(pointVelocity, plane->GetNormal());
+
 
 				// if this corner is on the opposite side from the COM, and moving further in, we need to resolve the collision
 				if ((distFromPlane > 0 && comFromPlane < 0 && velocityIntoPlane > 0) || (distFromPlane < 0 && comFromPlane > 0 && velocityIntoPlane < 0)) {
@@ -309,9 +315,15 @@ bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 			box1->ResolveCollision(box2, contact / float(numContacts), &norm);
 
 			// apply contact forces
-			glm::vec2 displacement = pen * norm;
-			box1->Nudge(-displacement * 0.5f);
-			box2->Nudge(displacement * 0.5f);
+			glm::vec2 penVec = pen * norm;
+			if (!box1->IsKinematic() && !box2->IsKinematic()) {
+				box1->Nudge(-penVec * 0.5f);
+				box2->Nudge(penVec * 0.5f);
+			} else if (box1->IsKinematic()) {
+				box2->Nudge(penVec);
+			} else {
+				box1->Nudge(-penVec);
+			}
 		}
 			return true;
 	}
