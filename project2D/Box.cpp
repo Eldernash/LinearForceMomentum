@@ -5,17 +5,12 @@
 Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, glm::vec4 colour) : RigidBody(BOX, position, velocity, 0, mass) {
 	m_extents = extents;
 	m_colour = colour;
-	m_elasticity = 0;
+	m_elasticity = 1;
 	m_isKinematic = false;
 	m_linearDrag = 0;
 	m_angularDrag = 0;
 	m_moment = 1.0f / 12.0f * mass * m_extents.x * m_extents.y;
 
-	//test
-	float cs = cosf(m_rotation);
-	float sn = sinf(m_rotation);
-	m_localX = glm::normalize(glm::vec2(cs, sn));
-	m_localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, float aVec, glm::vec4 colour) : RigidBody(BOX, position, velocity, 0, mass) {
@@ -28,23 +23,12 @@ Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, 
 	m_angularVelocity = aVec;
 	m_moment =  1.0f / 12.0f * mass * m_extents.x * m_extents.y;
 
-	//test
-	float cs = cosf(m_rotation);
-	float sn = sinf(m_rotation);
-	m_localX = glm::normalize(glm::vec2(cs, sn));
-	m_localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 Box::~Box(){}
 
 void Box::FixedUpdate(glm::vec2 gravity, float timeStep) {
 		RigidBody::FixedUpdate(gravity, timeStep);
-
-		//store the local axes
-		float cs = cosf(m_rotation);
-		float sn = sinf(m_rotation);
-		m_localX = glm::normalize(glm::vec2(cs, sn));
-		m_localY = glm::normalize(glm::vec2(-sn, cs));
 }
 void Box::Draw() {
 	//draw using local axes

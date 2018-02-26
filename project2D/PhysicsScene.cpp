@@ -2,10 +2,12 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "Box.h"
+#include "Spring.h"
 
 class Sphere;
 class Plane;
 class Box;
+class Spring;
 
 PhysicsScene::PhysicsScene() : m_timeStep(0.01f), m_gravity(glm::vec2 (0,0)) {}
 
@@ -63,6 +65,10 @@ void PhysicsScene::CheckForCollision() {
 			int shapeId1 = object1->GetShapeID();
 			int shapeId2 = object2->GetShapeID();
 
+			if (shapeId1< 0 || shapeId2 < 0) {
+				continue;
+			}
+
 			// using funciton pointers
 			int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
 			fn collisionFunctionsPtr = collisionFunctionArray[functionIdx];
@@ -101,7 +107,7 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 		// if behind plane, flip normal
 		if (sphereToPlane < 0) {
-			//collisionNormal *= -1;
+			collisionNormal *= -1;
 			sphereToPlane *= -1;
 
 		}
@@ -112,7 +118,7 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 			plane->ResolveCollision(sphere, contact);
 
-			sphere->Nudge(plane->GetNormal() * intersection);
+			sphere->Nudge(collisionNormal * intersection);
 
 		}
 	}

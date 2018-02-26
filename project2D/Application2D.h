@@ -6,6 +6,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "Box.h"
+#include "Spring.h"
 
 class Application2D : public aie::Application {
 public:
@@ -18,6 +19,7 @@ public:
 
 	virtual void update(float deltaTime);
 	virtual void draw();
+	glm::vec2 WorldToGizmo(glm::vec2 coord);
 
 protected:
 
@@ -26,6 +28,9 @@ protected:
 
 	PhysicsScene* m_physicsScene;
 
+	std::vector<Spring*> springList;
+
 	float m_cameraX, m_cameraY;
 	float m_timer;
+	float aspectRatio = 16 / 9.f;
 };

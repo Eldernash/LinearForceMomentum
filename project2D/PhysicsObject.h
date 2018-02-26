@@ -1,14 +1,13 @@
 #pragma once
-
 #include <glm\glm.hpp>
 
 enum ShapeType {
+	SPRING = -1,
 	PLANE = 0,
 	SPHERE,
 	BOX,
 	SHAPE_COUNT
 };
-	//SPRING,
 
 class PhysicsObject
 {
@@ -21,8 +20,6 @@ public:
 	virtual void ResetPosition() {};
 	virtual float GetTotalEnergy(glm::vec2 gravity) { return 0; }
 	ShapeType GetShapeID() { return m_shapeID; }
-
-
 
 protected:
 	ShapeType m_shapeID;

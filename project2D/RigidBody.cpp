@@ -9,17 +9,33 @@ RigidBody::RigidBody(ShapeType shapeID, glm::vec2 position, glm::vec2 velocity, 
 	m_rotation = 0;
 	m_angularVelocity = 0;
 	m_mass = mass;
+
+	float cs = cosf(m_rotation);
+	float sn = sinf(m_rotation);
+	m_localX = glm::normalize(glm::vec2(cs, sn));
+	m_localY = glm::normalize(glm::vec2(-sn, cs));
 }
 
 
-RigidBody::~RigidBody() {
-}
+RigidBody::~RigidBody() {}
 
 void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
+	float cs = cosf(m_rotation);
+	float sn = sinf(m_rotation);
+	m_localX = glm::normalize(glm::vec2(cs, sn));
+	m_localY = glm::normalize(glm::vec2(-sn, cs));
+
 	if (m_isKinematic) {
 		SetVelocity(glm::vec2(0, 0));
-	} else {
+	}
+	else {
+
+		float cs = cosf(m_rotation);
+		float sn = sinf(m_rotation);
+		m_localX = glm::normalize(glm::vec2(cs, sn));
+		m_localY = glm::normalize(glm::vec2(-sn, cs));
+
 		m_velocity += gravity * timeStep;
 		m_position += m_velocity * timeStep;
 
@@ -27,8 +43,14 @@ void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 		m_rotation += m_angularVelocity * timeStep;
 		m_angularVelocity -= m_angularVelocity * m_angularDrag * timeStep;
 
-		if (length(m_velocity) < MIN_LINEAR_THRESHOLD) m_velocity = glm::vec2(0, 0);
-		if (abs(m_angularVelocity) < MIN_ANGULAR_THRESHOLD) m_angularVelocity = 0;
+		if (length(m_velocity) < MIN_LINEAR_THRESHOLD) {
+			if (glm::length(m_velocity) < length(gravity) * m_linearDrag * timeStep) {
+				m_velocity = glm::vec2(0, 0);
+			}
+		}
+		if (abs(m_angularVelocity) < MIN_ANGULAR_THRESHOLD) {
+			m_angularVelocity = 0;
+		}
 	}
 }
 
