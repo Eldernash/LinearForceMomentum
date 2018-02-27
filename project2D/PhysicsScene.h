@@ -16,6 +16,7 @@ public:
 	void RemoveActor(PhysicsObject* actor);
 	void Update(float deltaTime);
 	void UpdateGizmo();
+	void RemoveObject(glm::vec2 position, float radius);
 
 	void DebugScene();
 
@@ -26,7 +27,7 @@ public:
 
 	float GetTimeStep() const { return m_timeStep; }
 	float GetEnergy();
-	std::vector<PhysicsObject*> GetActors() { return m_actors; }
+	std::list<PhysicsObject*> GetActors() { return m_actors; }
 
 	void CheckForCollision();
 
@@ -43,6 +44,7 @@ public:
 protected:
 	glm::vec2 m_gravity;
 	float m_timeStep;
-	std::vector<PhysicsObject*> m_actors;
+	std::list<PhysicsObject*> m_actors;
+
 };
 

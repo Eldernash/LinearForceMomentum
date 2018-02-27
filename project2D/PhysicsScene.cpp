@@ -22,11 +22,8 @@ void PhysicsScene::AddActor(PhysicsObject * actor) {
 }
 
 void PhysicsScene::RemoveActor(PhysicsObject * actor) {
-	for (auto iter = m_actors.begin(); iter != m_actors.end(); iter++) {
-		if (*iter == actor) {
-			m_actors.erase(iter);
-		}
-	}
+	m_actors.remove(actor);
+	
 }
 
 void PhysicsScene::Update(float deltaTime) {
@@ -45,6 +42,23 @@ void PhysicsScene::UpdateGizmo() {
 	}
 }
 
+void PhysicsScene::RemoveObject(glm::vec2 position, float radius) {
+	std::list<PhysicsObject*> deleteList;
+
+	for (auto pActor : m_actors) {
+		RigidBody* actor = dynamic_cast<RigidBody*>(pActor);
+
+		if (actor != nullptr) {
+			if (glm::distance(actor->GetPosition(), position) < radius) {
+				deleteList.push_back(actor);
+			}
+		}
+	}
+	for (auto del : deleteList) {
+		RemoveActor(del);
+	}
+}
+
 // function pointer array for doing our collisions
 typedef bool(*fn)(PhysicsObject*, PhysicsObject*);
 
@@ -58,10 +72,12 @@ void PhysicsScene::CheckForCollision() {
 	int actorCount = (int)m_actors.size();
 
 	// need to check for collisions against all objects except this one
-	for (int outer = 0; outer < actorCount - 1; outer++) {
-		for (int inner = outer + 1; inner < actorCount; inner++) {
-			PhysicsObject* object1 = m_actors[outer];
-			PhysicsObject* object2 = m_actors[inner];
+	for (auto outer = m_actors.begin(); outer!= std::prev(m_actors.end()); outer++){
+		for (auto inner = std::next(outer); inner != m_actors.end(); inner++){
+
+			PhysicsObject* object1 = *outer;
+			PhysicsObject* object2 = *inner;
+
 			int shapeId1 = object1->GetShapeID();
 			int shapeId2 = object2->GetShapeID();
 
@@ -89,7 +105,7 @@ bool PhysicsScene::Plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 }
 
 bool PhysicsScene::Plane2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
-	return Box2Plane(obj1, obj2);
+	return Box2Plane(obj2, obj1);
 }
 
 bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
@@ -132,8 +148,36 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 	// if we are successful then test for collision
 	if (sphere1 != nullptr && sphere2 != nullptr) {
-		if (glm::distance(sphere1->GetPosition(), sphere2->GetPosition()) <= sphere1->GetRadius() + sphere2->GetRadius()) {
-			sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
+		if ((sphere1->GetPosition().x - sphere1->GetRadius() < 0 && sphere2->GetPosition().x - sphere2->GetRadius() < 0) || (sphere1->GetPosition().x + sphere1->GetRadius() > 0 && sphere2->GetPosition().x + sphere2->GetRadius() > 0)) {
+			if ((sphere1->GetPosition().y - sphere1->GetRadius() < 0 && sphere2->GetPosition().y - sphere2->GetRadius() < 0) || (sphere1->GetPosition().y + sphere1->GetRadius() > 0 && sphere2->GetPosition().y + sphere2->GetRadius() > 0)) {
+				float dist = glm::distance(sphere1->GetPosition(), sphere2->GetPosition());
+				float radi = sphere1->GetRadius() + sphere2->GetRadius();
+
+				// delt pos + pos
+				glm::vec2 delta = sphere2->GetPosition() - sphere1->GetPosition();
+
+				if (glm::distance(sphere1->GetPosition(), sphere2->GetPosition()) <= sphere1->GetRadius() + sphere2->GetRadius()) {
+
+					// contact force
+
+					glm::vec2 contactForce = (dist - (sphere1->GetRadius() + sphere2->GetRadius())) * delta / dist;
+
+
+
+					if (!sphere1->IsKinematic() && !sphere2->IsKinematic()) {
+						sphere1->Nudge(contactForce * 0.5f);
+						sphere2->Nudge(-contactForce * 0.5f);
+					}
+					else if (!sphere1->IsKinematic()) {
+						sphere1->Nudge(contactForce);
+					}
+					else {
+						sphere2->Nudge(-contactForce);
+					}
+
+					sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
+				}
+			}
 		}
 	}
 	return false;
@@ -161,15 +205,16 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 		float comFromPlane = glm::dot(box->GetPosition() - planeOrigin, plane->GetNormal());
 
 		// check all four corners to see if we've hit the plane
-		for (float x = -box->GetExtents().x; x<box->GetWidth(); x += box->GetWidth()) {
-			for (float y = -box->GetExtents().y; y<box->GetHeight(); y += box->GetHeight()) {
+		for (float x = -box->GetExtents().x; x < box->GetWidth(); x += box->GetWidth()) {
+			for (float y = -box->GetExtents().y; y < box->GetHeight(); y += box->GetHeight()) {
+				
 				// get the position of the corner in world space
 				glm::vec2 p = box->GetPosition() + x * box->GetLocalX() + y * box->GetLocalY();
+
 				float distFromPlane = glm::dot(p - planeOrigin, plane->GetNormal());
 
 				// this is the total velocity of the point
-				glm::vec2 pointVelocity = box->GetVelocity() + box->GetAngularVelocity() * (-y * box->GetLocalX() + x * box->GetLocalY());
-				float velocityIntoPlane = glm::dot(pointVelocity, plane->GetNormal());
+				float velocityIntoPlane = glm::dot(box->GetVelocity() + box->GetAngularVelocity() * (-y * box->GetLocalX() + x * box->GetLocalY()), plane->GetNormal());
 
 				// if this corner is on the opposite side from the COM, and moving further in, we need to resolve the collision
 				if ((distFromPlane > 0 && comFromPlane < 0 && velocityIntoPlane > 0) || (distFromPlane < 0 && comFromPlane > 0 && velocityIntoPlane < 0)) {
@@ -178,8 +223,12 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 					contactV += velocityIntoPlane;
 
 					if (comFromPlane >= 0) {
-						if (penetration > distFromPlane) penetration = distFromPlane;
-					} else if (penetration < distFromPlane) penetration = distFromPlane;
+						if (penetration > distFromPlane) {
+							penetration = distFromPlane;
+						}
+					} else if (penetration < distFromPlane) {
+						penetration = distFromPlane;
+					}
 				}
 			}
 		}
@@ -202,9 +251,15 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 			float mass0 = 1.0f / (1.0f / box->GetMass() + (r*r) / box->GetMoment());
 
 			// and appky the force
+			float keBefore = box->GetLinearEnergy();
+			float krBefore = box->GetRotationalEnergy();
 			box->ApplyForce(acceleration * mass0, localContact);
-
 			box->Nudge(-plane->GetNormal() * penetration);
+
+			float keAfter = box->GetLinearEnergy();
+			float krAfter = box->GetRotationalEnergy();
+
+			return true;
 		}
 	}
 	return false;
@@ -276,7 +331,7 @@ bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 				penVec = glm::normalize(contact - sphere->GetPosition()) * pen;
 			}
 
-			box->ResolveCollision(sphere, contact, direction);	
+			box->ResolveCollision(sphere, contact, direction);
 			
 			// move each shape away in the direction of penetration
 			if (!box->IsKinematic() && !sphere->IsKinematic()) {
@@ -298,28 +353,39 @@ bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 	Box* box2 = dynamic_cast<Box*>(obj2);
 
 	if (box1 != nullptr && box2 != nullptr) {
-		glm::vec2 boxPos = box2->GetPosition() - box1->GetPosition();
+		if ((box1->GetPosition().x - box1->GetExtents().x < 0 && box2->GetPosition().x - box2->GetExtents().x < 0) || (box1->GetPosition().x + box1->GetExtents().x > 0 && box2->GetPosition().x + box2->GetExtents().x  > 0)) {
+			if ((box1->GetPosition().x - box1->GetExtents().y < 0 && box2->GetPosition().y - box2->GetExtents().y < 0) || (box1->GetPosition().y + box1->GetExtents().y > 0 && box2->GetPosition().y + box2->GetExtents().y  > 0)) {
 
-		glm::vec2 norm(0, 0);
-		glm::vec2 contact(0, 0);
-		float pen = 0;
-		int numContacts = 0;
+				glm::vec2 norm(0, 0);
+				glm::vec2 contact(0, 0);
+				float pen = 0;
+				int numContacts = 0;
 
-		box1->CheckBoxCorners(*box2, contact, numContacts, pen, norm);
+				box1->CheckBoxCorners(*box2, contact, numContacts, pen, norm);
 
-		if (box2->CheckBoxCorners(*box1, contact, numContacts, pen, norm)) {
-			norm = -norm;
+				if (box2->CheckBoxCorners(*box1, contact, numContacts, pen, norm)) {
+					norm = -norm;
+				}
+
+				if (pen > 0) {
+					// apply contact forces
+					glm::vec2 displacement = pen * norm;
+					if (!box1->IsKinematic() && !box2->IsKinematic()) {
+						box1->Nudge(-displacement * 0.5f);
+						box2->Nudge(displacement * 0.5f);
+					}
+					else if (!box1->IsKinematic()) {
+						box1->Nudge(-displacement);
+					}
+					else {
+						box2->Nudge(displacement);
+					}
+					box1->ResolveCollision(box2, contact / float(numContacts), &norm);
+
+				}
+				return true;
+			}
 		}
-
-		if (pen > 0){
-			box1->ResolveCollision(box2, contact / float(numContacts), &norm);
-
-			// apply contact forces
-			glm::vec2 displacement = pen * norm;
-			box1->Nudge(-displacement * 0.5f);
-			box2->Nudge(displacement * 0.5f);
-		}
-			return true;
 	}
 	return false;
 }

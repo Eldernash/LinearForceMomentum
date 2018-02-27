@@ -33,4 +33,8 @@ protected:
 	float m_cameraX, m_cameraY;
 	float m_timer;
 	float aspectRatio = 16 / 9.f;
+
+	short spawner = 1;
+
+	bool running = true;
 };

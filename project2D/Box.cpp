@@ -9,7 +9,7 @@ Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, 
 	m_isKinematic = false;
 	m_linearDrag = 0;
 	m_angularDrag = 0;
-	m_moment = 1.0f / 12.0f * mass * m_extents.x * m_extents.y;
+	m_moment =  1.0f / 12.0f * mass * m_extents.x * 2.0f * m_extents.y * 2.0f;
 
 }
 
@@ -21,7 +21,7 @@ Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, 
 	m_linearDrag = 0;
 	m_angularDrag = 0;
 	m_angularVelocity = aVec;
-	m_moment =  1.0f / 12.0f * mass * m_extents.x * m_extents.y;
+	m_moment = 1.0f / 12.0f * mass * m_extents.x * 2.0f * m_extents.y * 2.0f;
 
 }
 

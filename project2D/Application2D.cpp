@@ -1,6 +1,5 @@
 #include <glm\ext.hpp>
 #include <Gizmos.h>
-#include <random>
 
 #include "Application2D.h"
 #include "Texture.h"
@@ -19,7 +18,6 @@ glm::vec2 Application2D::WorldToGizmo(glm::vec2 coord) {
 }
 
 bool Application2D::startup() {
-	srand(time(NULL));
 
 	// increase the 2D line count to maximise the number of objects we can draw
 	aie::Gizmos::create(255U,255U,65535U,65535U);
@@ -29,7 +27,7 @@ bool Application2D::startup() {
 	m_font = new aie::Font("./font/consolas.ttf", 32);
 	
 	m_physicsScene = new PhysicsScene();
-	m_physicsScene->SetGravity(glm::vec2(0, -10));
+	m_physicsScene->SetGravity(glm::vec2(0, -80));
 	m_physicsScene->SetTimeStep(0.01f);
 
 	int startX = -70;
@@ -38,14 +36,11 @@ bool Application2D::startup() {
 	float ballRadius = 0.5f;
 	float mass = 1;
 
-	Sphere* ball = new Sphere(glm::vec2(-40, 20), glm::vec2(0, -20), 6, 2, glm::vec4(0, 1, 0, 1));
-	m_physicsScene->AddActor(ball);
-
 	ball1 = new Sphere(glm::vec2(startX, 0), glm::vec2(0, 0), mass, ballRadius, glm::vec4(1, 0, 0, 1));
 	ball1->SetElasticity(0.9f);
 	ball1->SetKinematic(true);
 	m_physicsScene->AddActor(ball1);
-	int numberBalls = 50;
+	int numberBalls = 40;
 	for (int i = 1; i < numberBalls; i++)
 	{
 		ball2 = new Sphere(glm::vec2(startX + i, 0), glm::vec2(0, 0), mass, ballRadius, glm::vec4(1, 0, 0, 1));
@@ -60,6 +55,8 @@ bool Application2D::startup() {
 		m_physicsScene->AddActor(newSpring);
 		ball1 = ball2;
 	}
+
+
 	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
 	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
 	Plane* line3 = new Plane(glm::vec2(0, 1), 50);
@@ -84,7 +81,6 @@ void Application2D::shutdown() {
 }
 
 void Application2D::update(float deltaTime) {
-
 	m_timer += deltaTime;
 
 	// input example
@@ -92,28 +88,55 @@ void Application2D::update(float deltaTime) {
 
 	aie::Gizmos::clear();
 
-	m_physicsScene->Update(deltaTime);
+	if (running) {
+		m_physicsScene->Update(deltaTime);
+		std::cout << m_physicsScene->GetEnergy() << std::endl;
 
-	std::cout << m_physicsScene->GetEnergy() << std::endl;
-
-	if (input->isKeyDown(aie::INPUT_KEY_UP)) {
-		for (auto iter = springList.begin(); iter != springList.end(); iter++) {
-			(*iter)->SetRestLength(1.0f);
+		if (input->wasKeyPressed(aie::INPUT_KEY_UP)) {
+			for (auto iter = springList.begin(); iter != springList.end(); iter++) {
+				(*iter)->SetRestLength(1.0f);
+			}
+		}
+		if (input->wasKeyPressed(aie::INPUT_KEY_DOWN)) {
+			for (auto iter = springList.begin(); iter != springList.end(); iter++) {
+				(*iter)->SetRestLength(2.0f);
+			}
 		}
 	}
-	if (input->isKeyDown(aie::INPUT_KEY_DOWN)) {
-		for (auto iter = springList.begin(); iter != springList.end(); iter++) {
-			(*iter)->SetRestLength(2.0f);
-		}
-	}
 
-	if (input->wasMouseButtonPressed(0)) {
-		float mouseX = input->getMouseX();
-		float mouseY = input->getMouseY();
+	if (input->isMouseButtonDown(0)) {
+		float mouseX = (float)input->getMouseX();
+		float mouseY = (float)input->getMouseY();
 		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY));
-		Sphere* mBall = new Sphere(coords, glm::vec2(0, 0), 1, 2, glm::vec4(0, 0, 1, 1));
-		//Box* mBox = new Box*(coords, glm::vec2(80,0)
-		m_physicsScene->AddActor(mBall);
+		if (spawner == 1) {
+			Sphere * mSphere = new Sphere(coords, glm::vec2(0, 0), 1, 4, glm::vec4(0, 0, 1, 1));
+			m_physicsScene->AddActor(mSphere);
+		} else if (spawner == 2) {
+			Box * mBox = new Box(coords, glm::vec2(3, 3), glm::vec2(0, 0), 1, glm::vec4(0, 1, 0, 1));
+			m_physicsScene->AddActor(mBox);
+		}
+	}
+	if (input->isMouseButtonDown(1)) {
+		float mouseX = (float)input->getMouseX();
+		float mouseY = (float)input->getMouseY();
+		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY));
+		m_physicsScene->RemoveObject(coords, 10);
+	}
+
+	// changes between the apwned object
+	if (input->wasKeyPressed(aie::INPUT_KEY_1)) {
+		spawner = 1;
+	} else if (input->wasKeyPressed(aie::INPUT_KEY_2)) {
+		spawner = 2;
+	}
+
+	// pasuses/resumes the simulation
+	if (input->wasKeyPressed(aie::INPUT_KEY_SPACE)) {
+		if (running) {
+			running = false;
+		} else {
+			running = true;
+		}
 	}
 
 	// exit the application

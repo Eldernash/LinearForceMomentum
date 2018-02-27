@@ -45,8 +45,8 @@ Sphere::~Sphere() {}
 void Sphere::Draw() {
 	glm::vec2 end = glm::vec2(std::cos(m_rotation), std::sin(m_rotation)) * m_radius;
 
-	aie::Gizmos::add2DCircle(m_position, m_radius, 3, m_colour);
-	aie::Gizmos::add2DLine(m_position, m_position + end, glm::vec4(1, 1, 1, 1));
+	aie::Gizmos::add2DCircle(m_position, m_radius, 8, m_colour);
+	//aie::Gizmos::add2DLine(m_position, m_position + end, glm::vec4(1, 1, 1, 1));
 }
 
 void Sphere::RicochetPerp() {
