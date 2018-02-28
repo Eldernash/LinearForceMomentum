@@ -43,3 +43,10 @@ void Spring::Draw() {
 	glm::vec4 colour(1, 1, 0, 1);
 	aie::Gizmos::add2DLine(m_body1->GetPosition(), m_body2->GetPosition(), colour);
 }
+
+std::list<RigidBody*> Spring::GetBodies(){
+	std::list<RigidBody*> list;
+	list.push_back(m_body1);
+	list.push_back(m_body2);
+	return list;
+}

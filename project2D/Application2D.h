@@ -19,6 +19,8 @@ public:
 
 	virtual void update(float deltaTime);
 	virtual void draw();
+	void CreateSoftBody(glm::vec2 coords, glm::vec2 dimensions);
+
 	glm::vec2 WorldToGizmo(glm::vec2 coord);
 
 protected:

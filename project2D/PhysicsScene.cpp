@@ -18,12 +18,34 @@ PhysicsScene::~PhysicsScene() {
 }
 
 void PhysicsScene::AddActor(PhysicsObject * actor) {
+	
+	Spring* spring = dynamic_cast<Spring*>(actor);
+	if (spring != nullptr) {
+		m_springs.push_back(spring);
+	}
+
 	m_actors.push_back(actor);
+
 }
 
 void PhysicsScene::RemoveActor(PhysicsObject * actor) {
 	m_actors.remove(actor);
 	
+	std::list<Spring*> delSprings;
+
+	for (auto pSpring : m_springs) {
+		std::list<RigidBody*> sList = pSpring->GetBodies();
+		for (auto dt : sList) {
+			if (dt == actor) {
+				delSprings.push_back(pSpring);
+			}
+		}
+		for (auto del : delSprings) {
+			m_actors.remove(del);
+		}
+		m_actors.remove(actor);
+	}
+
 }
 
 void PhysicsScene::Update(float deltaTime) {

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Gizmos.h>
+#include <list>
+
 #include "PhysicsObject.h"
 
 class RigidBody;
@@ -15,6 +17,8 @@ public:
 	void Draw();
 
 	void SetRestLength(float restLength) { m_restLength = restLength; }
+
+	std::list<RigidBody*> GetBodies();
 
 protected:
 	RigidBody* m_body1;

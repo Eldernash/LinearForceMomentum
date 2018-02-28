@@ -5,6 +5,7 @@
 #include <iostream>
 
 class PhysicsObject;
+class Spring;
 
 class PhysicsScene
 {
@@ -45,6 +46,7 @@ protected:
 	glm::vec2 m_gravity;
 	float m_timeStep;
 	std::list<PhysicsObject*> m_actors;
+	std::list<Spring*> m_springs;
 
 };
 
