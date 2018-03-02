@@ -19,7 +19,8 @@ public:
 
 	virtual void update(float deltaTime);
 	virtual void draw();
-	void CreateSoftBody(glm::vec2 coords, glm::vec2 dimensions);
+	void CreateSoftBody(glm::vec2 coords);
+	void CreateRope(glm::vec2 coord1, glm::vec2 coord2);
 
 	glm::vec2 WorldToGizmo(glm::vec2 coord);
 
@@ -30,7 +31,7 @@ protected:
 
 	PhysicsScene* m_physicsScene;
 
-	std::vector<Spring*> springList;
+	glm::vec2 ropeStartPos;
 
 	float m_cameraX, m_cameraY;
 	float m_timer;
@@ -38,5 +39,8 @@ protected:
 
 	short spawner = 1;
 
+	// booleans for controlling the simulation
 	bool running = true;
+	bool secondRopeNode = false;
+	bool spawnKinematic = false;
 };

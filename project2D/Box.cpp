@@ -13,16 +13,15 @@ Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, 
 
 }
 
-Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, float aVec, glm::vec4 colour) : RigidBody(BOX, position, velocity, 0, mass) {
+Box::Box(glm::vec2 position, glm::vec2 extents, glm::vec2 velocity, float mass, bool kinematic, glm::vec4 colour) : RigidBody(BOX, position, velocity, 0, mass) {
 	m_extents = extents;
 	m_colour = colour;
 	m_elasticity = 1;
 	m_isKinematic = false;
 	m_linearDrag = 0;
 	m_angularDrag = 0;
-	m_angularVelocity = aVec;
+	m_isKinematic = kinematic;
 	m_moment = 1.0f / 12.0f * mass * m_extents.x * 2.0f * m_extents.y * 2.0f;
-
 }
 
 Box::~Box(){}

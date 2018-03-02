@@ -16,27 +16,89 @@ glm::vec2 Application2D::WorldToGizmo(glm::vec2 coord) {
 	glm::vec2 finalCoord = (coord - glm::vec2(getWindowWidth() / 2, getWindowHeight() / 2)) * scaleFactor;
 	return finalCoord;
 }
-void Application2D::CreateSoftBody(glm::vec2 coords, glm::vec2 dimensions) {
+
+void Application2D::CreateRope(glm::vec2 coord1, glm::vec2 coord2) {
+	glm::vec2 p1 = coord1;
+	glm::vec2 p2 = coord2;
+	float density = 5.0f;
+
+	glm::vec2 dist = p1 - p2;
+	glm::vec2 direction = glm::normalize(dist);
+
+	Sphere * rSphere1 = new Sphere(glm::vec2(p2 + (direction * (0 * density))), glm::vec2(0, 0), 1, 1, glm::vec4(1, 1, 1, 1));
+	m_physicsScene->AddActor(rSphere1);
+	rSphere1->SetKinematic(true);
+
+	for (int i = 1; i < glm::length(dist) / density; i++) {
+		Sphere * rSphere2 = new Sphere(glm::vec2(p2 + (direction * (i * density))), glm::vec2(0, 0), 1, 1, glm::vec4(1, 1, 1, 1));
+		m_physicsScene->AddActor(rSphere2);
+		Spring * link = new Spring(rSphere1, rSphere2, density / 2, 50, 0.1f);
+		m_physicsScene->AddActor(link);
+		rSphere1 = rSphere2;
+	}
+
+	rSphere1->SetKinematic(true);
+}
+
+void Application2D::CreateSoftBody(glm::vec2 coords) {
+
+	int dimX = 5;
+	int dimY = 5;
+
+	float radius = 1;
+
+	bool first = true;
 
 	std::vector<Sphere*> sbList;
 	Sphere* sbBall1;
-	sbBall1 = new Sphere(coords, glm::vec2(0, 0), 1, 1, glm::vec4(0, 0, 1, 1));
+	sbBall1 = new Sphere(coords, glm::vec2(0, 0), 1, radius, glm::vec4(0, 0, 1, 1));
 	sbList.push_back(sbBall1);
-	for (int x = 1; x < dimensions.x - 1; x++) {
-		for (int y = 1; y < dimensions.y - 1; y++) {
-			Sphere* sbBall2 = new Sphere(glm::vec2(coords.x + (x * 2), coords.y + (y * 2)), glm::vec2(0, 0), 1, 1, glm::vec4(0, 0, 1, 1));
-			sbList.push_back(sbBall2);
+	m_physicsScene->AddActor(sbBall1);
+
+	// creates spheres in the determined size
+	for (int x = 0; x < dimX; x++) {
+		for (int y = 0; y < dimY; y++) {
+			if (!first) {
+				Sphere* sbBall2 = new Sphere(glm::vec2(coords.x + (x *  radius * 2), coords.y + (y * radius * 2)), glm::vec2(0, 0), 1, radius, glm::vec4(0, 0, 1, 1));
+				sbList.push_back(sbBall2);
+				m_physicsScene->AddActor(sbBall2);
+			} else {
+				first = false;
+			}
 		}
 	}
-	for (auto sbBall : sbList) {
 
+	// links the spheres together
+	for (int x = 0; x < dimX; x++) {
+		for (int y = 0; y < dimY; y++) {
+			int position = (x * dimX) + y;
+			if (position + 1 < dimX * dimY && position + 1 != (x+1) * dimX) {
+				Spring* spring1 = new Spring(sbList.at(position), sbList.at(position + 1), 2, 50, 0.0f);
+				m_physicsScene->AddActor(spring1);
+			}
+
+			if (position + dimX < dimX * dimY) { // links along the x axis
+				Spring* spring2 = new Spring(sbList.at(position), sbList.at(position + dimX), 2, 50, 0.0f);
+				m_physicsScene->AddActor(spring2);
+			}
+
+			// links along the upward diagonal
+			if (position + dimX < dimX * dimY && position + dimX + 1 != (x + 2) * dimX) {
+				Spring* spring2 = new Spring(sbList.at(position), sbList.at(position + dimX + 1), 2, 50, 0.0f);
+				m_physicsScene->AddActor(spring2);
+			}
+
+			// links along the downward diagonal
+			if (position + dimX < dimX * dimY && position != x * dimX) {
+				Spring* spring2 = new Spring(sbList.at(position), sbList.at(position + dimX - 1), 2, 50, 0.0f);
+				m_physicsScene->AddActor(spring2);
+			}
+		}
 	}
 }
 
-
 bool Application2D::startup() {
-
-	// increase the 2D line count to maximise the number of objects we can draw
+	// maximises the line render limit
 	aie::Gizmos::create(255U,255U,65535U,65535U);
 
 	m_2dRenderer = new aie::Renderer2D();
@@ -46,32 +108,6 @@ bool Application2D::startup() {
 	m_physicsScene = new PhysicsScene();
 	m_physicsScene->SetGravity(glm::vec2(0, -12));
 	m_physicsScene->SetTimeStep(0.01f);
-
-	int startX = -40;
-	Sphere* ball1;
-	Sphere* ball2;
-	float ballRadius = 2;
-	float mass = 100;
-
-	ball1 = new Sphere(glm::vec2(startX, 0), glm::vec2(0, 0), mass, ballRadius, glm::vec4(1, 0, 0, 1));
-	ball1->SetElasticity(0.9f);
-	ball1->SetKinematic(true);
-	m_physicsScene->AddActor(ball1);
-
-	int numberBalls = 20;
-	for (int i = 1; i < numberBalls; i++)
-	{
-		ball2 = new Sphere(glm::vec2(startX + (i * 5), 0), glm::vec2(0, 0), mass, ballRadius, glm::vec4(1, 0, 0, 1));
-		
-		m_physicsScene->AddActor(ball2);
-
-		Spring* newSpring = new Spring(ball1, ball2, 2.0f, 500, 5.0f);
-		springList.push_back(newSpring);
-
-		m_physicsScene->AddActor(newSpring);
-		ball1 = ball2;
-	}
-
 
 	Plane* line1 = new Plane(glm::vec2(1, 0), 100);
 	Plane* line2 = new Plane(glm::vec2(1, 0), -100);
@@ -91,7 +127,6 @@ bool Application2D::startup() {
 }
 
 void Application2D::shutdown() {
-	
 	delete m_font;
 	delete m_2dRenderer;
 }
@@ -99,71 +134,78 @@ void Application2D::shutdown() {
 void Application2D::update(float deltaTime) {
 	m_timer += deltaTime;
 
-	// input example
 	aie::Input* input = aie::Input::getInstance();
 
 	aie::Gizmos::clear();
 
+	// if the scene is unpaused, update the scene
 	if (running) {
 		m_physicsScene->Update(deltaTime);
 		std::cout << m_physicsScene->GetEnergy() << std::endl;
-
-		if (input->wasKeyPressed(aie::INPUT_KEY_UP)) {
-			for (auto iter = springList.begin(); iter != springList.end(); iter++) {
-				(*iter)->SetRestLength(1.0f);
-			}
-		}
-		if (input->wasKeyPressed(aie::INPUT_KEY_DOWN)) {
-			for (auto iter = springList.begin(); iter != springList.end(); iter++) {
-				(*iter)->SetRestLength(2.0f);
-			}
-		}
 	}
 
+	// whent he user clicks, decides on what action to take
 	if (input->wasMouseButtonPressed(0)) {
 		float mouseX = (float)input->getMouseX();
 		float mouseY = (float)input->getMouseY();
-		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY));
-		if (spawner == 1) {
-			Sphere * mSphere = new Sphere(coords, glm::vec2(0, 0), 1, 4, glm::vec4(0, 0, 1, 1));
+		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY)); // mouse coordinates for object spawning
+
+		if (spawner == 1) { // object 1, sphere
+			Sphere * mSphere = new Sphere(coords, glm::vec2(0, 0), 1, 4, glm::vec4(0, 0, 1, 1),1.0f, spawnKinematic);
 			m_physicsScene->AddActor(mSphere);
-		} else if (spawner == 2) {
-			Box * mBox = new Box(coords, glm::vec2(3, 3), glm::vec2(0, 0), 1, glm::vec4(0, 1, 0, 1));
+
+		} else if (spawner == 2) { // object 2, box
+			Box * mBox = new Box(coords, glm::vec2(3, 3), glm::vec2(0, 0), 1, spawnKinematic, glm::vec4(0, 1, 0, 1));
 			m_physicsScene->AddActor(mBox);
-		}
-		else if (spawner == 3) {
-			CreateSoftBody(coords, glm::vec2(5, 5));
+
+		} else if (spawner == 3) { // object 3, soft body "squishy square"
+			CreateSoftBody(coords);
+
+		} else if (spawner == 4) { // object 4, rope
+			if (secondRopeNode) {
+				CreateRope(ropeStartPos, coords);
+				secondRopeNode = false;
+			} else {
+				ropeStartPos = coords;
+				secondRopeNode = true;
+			}
 		}
 	}
+
 	if (input->isMouseButtonDown(1)) {
 		float mouseX = (float)input->getMouseX();
 		float mouseY = (float)input->getMouseY();
 		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY));
-		m_physicsScene->RemoveObject(coords, 10);
+		m_physicsScene->RemoveObject(coords, 5);
 	}
 
-	// changes between the apwned object
+	// changes between the spawned object
 	if (input->wasKeyPressed(aie::INPUT_KEY_1)) {
 		spawner = 1;
-	}
-	else if (input->wasKeyPressed(aie::INPUT_KEY_2)) {
+		secondRopeNode = false;
+	} else if (input->wasKeyPressed(aie::INPUT_KEY_2)) {
 		spawner = 2;
-	}
-	else if (input->wasKeyPressed(aie::INPUT_KEY_3)) {
+		secondRopeNode = false;
+	} else if (input->wasKeyPressed(aie::INPUT_KEY_3)) {
 		spawner = 3;
+		secondRopeNode = false;
 	}
-
-	// pasuses/resumes the simulation
-	if (input->wasKeyPressed(aie::INPUT_KEY_SPACE)) {
+	else if (input->wasKeyPressed(aie::INPUT_KEY_4)) {
+		spawner = 4;
+		secondRopeNode = false;
+	} else if (input->wasKeyPressed(aie::INPUT_KEY_W)) { // toggles spawn kinematics
+		if (spawnKinematic) {
+			spawnKinematic = false;
+		} else {
+			spawnKinematic = true;
+		}
+	} else if (input->wasKeyPressed(aie::INPUT_KEY_SPACE)) { // pauses/resumes the simulation
 		if (running) {
 			running = false;
 		} else {
 			running = true;
 		}
-	}
-
-	// exit the application
-	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE)) {
+	} else if (input->isKeyDown(aie::INPUT_KEY_ESCAPE)) { // exits the simulation
 		quit();
 	}
 }

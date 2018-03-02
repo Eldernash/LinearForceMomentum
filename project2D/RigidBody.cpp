@@ -55,10 +55,8 @@ void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 }
 
 void RigidBody::ApplyForce(glm::vec2 force, glm::vec2 pos) {
-	if (m_isKinematic) return;
-	
-	m_velocity += force / m_mass;
-	m_angularVelocity += (force.y * pos.x - force.x * pos.y) / (m_moment);
+	m_velocity += force / this->GetMass();
+	m_angularVelocity += (force.y * pos.x - force.x * pos.y) / (this->GetMoment());
 }
 
 void RigidBody::SetVelocity(glm::vec2 velocity) {
@@ -68,35 +66,26 @@ void RigidBody::SetPosition(glm::vec2 position) {
 	m_position = position;
 }
 
-void RigidBody::ResolveCollision(RigidBody* actor2, glm::vec2 contact, glm::vec2* collisionNormal) {
-
-	// finds the vector between the centres, or uses provided directions of force
+void RigidBody::ResolveCollision(RigidBody * actor2, glm::vec2 contact, glm::vec2* collisionNormal)
+{
 	glm::vec2 normal = collisionNormal ? *collisionNormal : glm::normalize(actor2->m_position - m_position);
 
-	// get the vector perpendicular to the collision normal
 	glm::vec2 perp(normal.y, -normal.x);
 
-	// determine the total velocity of teh contact points for the two objects, for both linear and rotational
-	// 'r' is the radius from axis to application of force
 	float r1 = glm::dot(contact - m_position, -perp);
 	float r2 = glm::dot(contact - actor2->m_position, perp);
-
-	// velocity of the contacty point on this object
 	float v1 = glm::dot(m_velocity, normal) - r1 * m_angularVelocity;
-	// velocity of contact point on actor2
 	float v2 = glm::dot(actor2->m_velocity, normal) + r2 * actor2->m_angularVelocity;
 
-	if (v1 > v2) { // they're moving closer
-		// calculate the effective mass at contact point for each object ie how much the contact point will move due to the force applied
-		float mass1 = 1.0f / (1.0f / m_mass + (r1*r1) / m_moment);
-		float mass2 = 1.0f / (1.0f / actor2->m_mass + (r2*r2) / actor2->m_moment);
+	if (v1 > v2) {
+		float mass1 = 1.0f / (1.0f / this->GetMass() + (r1*r1) / this->GetMoment());
+		float mass2 = 1.0f / (1.0f / actor2->GetMass() + (r2*r2) / actor2->GetMoment());
 
-	float elasticity = (m_elasticity + actor2->GetElasticity()) / 2.0f;
+		float elasticity = (m_elasticity = actor2->GetElasticity()) / 2.0f;
 
-	glm::vec2 force = (1.0f + elasticity)*mass1*mass2 / (mass1 + mass2)*(v1 - v2)*normal;
+		glm::vec2 force = (1.0f + elasticity) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2) * normal;
 
-	// apply equal and opposite forces
-	ApplyForce(-force, contact - m_position);
-	actor2->ApplyForce(force, contact - actor2->m_position);
+		ApplyForce(-force, contact - m_position);
+		actor2->ApplyForce(force, contact - actor2->m_position);
 	}
 }

@@ -173,18 +173,16 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 		if ((sphere1->GetPosition().x - sphere1->GetRadius() < 0 && sphere2->GetPosition().x - sphere2->GetRadius() < 0) || (sphere1->GetPosition().x + sphere1->GetRadius() > 0 && sphere2->GetPosition().x + sphere2->GetRadius() > 0)) {
 			if ((sphere1->GetPosition().y - sphere1->GetRadius() < 0 && sphere2->GetPosition().y - sphere2->GetRadius() < 0) || (sphere1->GetPosition().y + sphere1->GetRadius() > 0 && sphere2->GetPosition().y + sphere2->GetRadius() > 0)) {
 				float dist = glm::distance(sphere1->GetPosition(), sphere2->GetPosition());
-				float radi = sphere1->GetRadius() + sphere2->GetRadius();
+				float radii = sphere1->GetRadius() + sphere2->GetRadius();
 
 				// delt pos + pos
 				glm::vec2 delta = sphere2->GetPosition() - sphere1->GetPosition();
 
-				if (glm::distance(sphere1->GetPosition(), sphere2->GetPosition()) <= sphere1->GetRadius() + sphere2->GetRadius()) {
+				if (dist <= radii) {
 
 					// contact force
 
-					glm::vec2 contactForce = (dist - (sphere1->GetRadius() + sphere2->GetRadius())) * delta / dist;
-
-
+					glm::vec2 contactForce = (dist - (radii)) * (delta/dist);
 
 					if (!sphere1->IsKinematic() && !sphere2->IsKinematic()) {
 						sphere1->Nudge(contactForce * 0.5f);
@@ -196,11 +194,11 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 					else {
 						sphere2->Nudge(-contactForce);
 					}
-
-					sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
+						sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
 				}
 			}
 		}
+		return true;
 	}
 	return false;
 }
@@ -293,7 +291,7 @@ bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 	if (box != nullptr && sphere != nullptr) {
 		glm::vec2 circlePos = sphere->GetPosition() - box->GetPosition();
-		float w2 = box->GetWidth() / 2, h2 = box->GetHeight() / 2;
+		float w2 = box->GetExtents().x, h2 = box->GetExtents().y;
 
 		int numContacts = 0;
 		glm::vec2 contact(0, 0); // contact is in our box coordinates

@@ -25,15 +25,18 @@ public:
 	// gets the attributes of the object
 	virtual float GetTotalEnergy(glm::vec2 gravity) { return this->GetLinearEnergy() + this->GetRotationalEnergy() + this->GetGravityEnergy(gravity); }
 	float GetMoment() { return m_moment; }
-	float GetMass() { if (m_isKinematic) return FLT_MAX; else return m_mass; }
+	float GetMass() { return (m_isKinematic) ? (float)INT_MAX : m_mass; }
 	float GetElasticity() { return m_elasticity; }
 	float GetRotation() { return m_rotation; }
 	float GetLinearDrag() { return m_linearDrag; }
 	float GetAngularDrag() { return m_angularDrag; }
 	float GetAngularVelocity() { return m_angularVelocity; }
-	float GetLinearEnergy() { return 0.5f*m_mass*glm::dot(m_velocity, m_velocity); }
-	float GetRotationalEnergy() { return 0.5f * m_moment * m_angularVelocity * m_angularVelocity; }
-	float GetGravityEnergy(glm::vec2 gravity) { return -m_mass * glm::dot(m_position, gravity); }
+
+	// returns the respective energy values
+	float GetLinearEnergy() { return (m_isKinematic) ? 0 : 0.5f * m_mass * glm::dot(m_velocity, m_velocity); }
+	float GetRotationalEnergy() { return (m_isKinematic) ? 0 : 0.5f * m_moment * m_angularVelocity * m_angularVelocity; }
+	float GetGravityEnergy(glm::vec2 gravity) { return (m_isKinematic) ? 0 : m_mass * glm::dot(m_position, gravity); }
+
 	bool IsKinematic() { return m_isKinematic; }
 	glm::vec2 GetPosition() { return m_position; }
 	glm::vec2 GetVelocity() { return m_velocity; }
