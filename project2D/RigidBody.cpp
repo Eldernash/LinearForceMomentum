@@ -21,36 +21,29 @@ RigidBody::~RigidBody() {}
 
 void RigidBody::FixedUpdate(glm::vec2 gravity, float timeStep) {
 
+	if (m_isKinematic) {
+		SetVelocity(glm::vec2(0, 0));
+		return;
+	}
 	float cs = cosf(m_rotation);
 	float sn = sinf(m_rotation);
 	m_localX = glm::normalize(glm::vec2(cs, sn));
 	m_localY = glm::normalize(glm::vec2(-sn, cs));
 
-	if (m_isKinematic) {
-		SetVelocity(glm::vec2(0, 0));
+	m_velocity += gravity * timeStep;
+	m_position += m_velocity * timeStep;
+
+	m_velocity -= m_velocity * m_linearDrag * timeStep;
+	m_rotation += m_angularVelocity * timeStep;
+	m_angularVelocity -= m_angularVelocity * m_angularDrag * timeStep;
+
+	if (length(m_velocity) < MIN_LINEAR_THRESHOLD) {
+		if (glm::length(m_velocity) < length(gravity) * m_linearDrag * timeStep) {
+			m_velocity = glm::vec2(0, 0);
+		}
 	}
-	else {
-
-		float cs = cosf(m_rotation);
-		float sn = sinf(m_rotation);
-		m_localX = glm::normalize(glm::vec2(cs, sn));
-		m_localY = glm::normalize(glm::vec2(-sn, cs));
-
-		m_velocity += gravity * timeStep;
-		m_position += m_velocity * timeStep;
-
-		m_velocity -= m_velocity * m_linearDrag * timeStep;
-		m_rotation += m_angularVelocity * timeStep;
-		m_angularVelocity -= m_angularVelocity * m_angularDrag * timeStep;
-
-		if (length(m_velocity) < MIN_LINEAR_THRESHOLD) {
-			if (glm::length(m_velocity) < length(gravity) * m_linearDrag * timeStep) {
-				m_velocity = glm::vec2(0, 0);
-			}
-		}
-		if (abs(m_angularVelocity) < MIN_ANGULAR_THRESHOLD) {
-			m_angularVelocity = 0;
-		}
+	if (abs(m_angularVelocity) < MIN_ANGULAR_THRESHOLD) {
+		m_angularVelocity = 0;
 	}
 }
 
@@ -83,8 +76,10 @@ void RigidBody::ResolveCollision(RigidBody * actor2, glm::vec2 contact, glm::vec
 
 		float elasticity = (m_elasticity = actor2->GetElasticity()) / 2.0f;
 
+		// calculate the overall force
 		glm::vec2 force = (1.0f + elasticity) * mass1 * mass2 / (mass1 + mass2) * (v1 - v2) * normal;
 
+		// applies force to both actors
 		ApplyForce(-force, contact - m_position);
 		actor2->ApplyForce(force, contact - actor2->m_position);
 	}

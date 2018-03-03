@@ -23,7 +23,6 @@ public:
 	void SetElasticity(float elasticity) { m_elasticity = elasticity; }
 
 	// gets the attributes of the object
-	virtual float GetTotalEnergy(glm::vec2 gravity) { return this->GetLinearEnergy() + this->GetRotationalEnergy() + this->GetGravityEnergy(gravity); }
 	float GetMoment() { return m_moment; }
 	float GetMass() { return (m_isKinematic) ? (float)INT_MAX : m_mass; }
 	float GetElasticity() { return m_elasticity; }
@@ -36,6 +35,7 @@ public:
 	float GetLinearEnergy() { return (m_isKinematic) ? 0 : 0.5f * m_mass * glm::dot(m_velocity, m_velocity); }
 	float GetRotationalEnergy() { return (m_isKinematic) ? 0 : 0.5f * m_moment * m_angularVelocity * m_angularVelocity; }
 	float GetGravityEnergy(glm::vec2 gravity) { return (m_isKinematic) ? 0 : m_mass * glm::dot(m_position, gravity); }
+	virtual float GetTotalEnergy(glm::vec2 gravity) { return this->GetLinearEnergy() + this->GetRotationalEnergy() + this->GetGravityEnergy(gravity); }
 
 	bool IsKinematic() { return m_isKinematic; }
 	glm::vec2 GetPosition() { return m_position; }
@@ -48,7 +48,7 @@ protected:
 
 	float m_mass;
 	float m_elasticity;
-	float m_rotation; // 2D so we only need a single float to represent out rotation
+	float m_rotation;
 	float m_linearDrag;
 	float m_angularDrag;
 	float m_angularVelocity;

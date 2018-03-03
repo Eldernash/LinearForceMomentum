@@ -24,11 +24,7 @@ public:
 	bool CheckBoxCorners(Box& box, glm::vec2& contact, int& numContacts, float& pen, glm::vec2& edgeNormal);
 
 protected:
-
 	glm::vec2 m_extents; // the halfedge lengths
 	glm::vec4 m_colour;
-
-	// store the local x,y axes if the box based on its anfle of rotation
-
 };
 

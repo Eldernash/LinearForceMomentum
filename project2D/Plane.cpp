@@ -13,9 +13,7 @@ Plane::Plane(glm::vec2 normal, float distance) : PhysicsObject(PLANE) {
 
 Plane::~Plane() {}
 
-void Plane::FixedUpdate(glm::vec2 gravity, float timeStep)
-{
-}
+void Plane::FixedUpdate(glm::vec2 gravity, float timeStep) {}
 
 void Plane::Draw() {
 	float lineSegmentLength = 300;
@@ -29,9 +27,7 @@ void Plane::Draw() {
 	aie::Gizmos::add2DLine(start, end, colour);
 }
 
-void Plane::ResetPosition()
-{
-}
+void Plane::ResetPosition() {}
 
 void Plane::ResolveCollision(RigidBody* actor2, glm::vec2 contact) {
 

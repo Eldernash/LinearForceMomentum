@@ -37,7 +37,7 @@ protected:
 	float m_timer;
 	float aspectRatio = 16 / 9.f;
 
-	short spawner = 1;
+	short spawnerID = 1; // used for deciding what object to spawn
 
 	// booleans for controlling the simulation
 	bool running = true;

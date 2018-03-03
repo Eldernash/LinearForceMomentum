@@ -21,10 +21,10 @@ public:
 
 	void ResolveCollision(RigidBody* actor2, glm::vec2 contact);
 
-	glm::vec2 GetNormal() { return m_normal; }
 	float GetDistance() { return m_distance; }
+	glm::vec2 GetNormal() { return m_normal; }
 
 protected:
-	glm::vec2 m_normal;
 	float m_distance;
+	glm::vec2 m_normal;
 };

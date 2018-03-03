@@ -29,9 +29,10 @@ void Application2D::CreateRope(glm::vec2 coord1, glm::vec2 coord2) {
 	m_physicsScene->AddActor(rSphere1);
 	rSphere1->SetKinematic(true);
 
-	for (int i = 1; i < glm::length(dist) / density; i++) {
+	for (int i = 1; i < glm::length(dist) / density; i++) { // creates spheres and springs to form the rope
 		Sphere * rSphere2 = new Sphere(glm::vec2(p2 + (direction * (i * density))), glm::vec2(0, 0), 1, 1, glm::vec4(1, 1, 1, 1));
 		m_physicsScene->AddActor(rSphere2);
+
 		Spring * link = new Spring(rSphere1, rSphere2, density / 2, 50, 0.1f);
 		m_physicsScene->AddActor(link);
 		rSphere1 = rSphere2;
@@ -50,6 +51,7 @@ void Application2D::CreateSoftBody(glm::vec2 coords) {
 	bool first = true;
 
 	std::vector<Sphere*> sbList;
+
 	Sphere* sbBall1;
 	sbBall1 = new Sphere(coords, glm::vec2(0, 0), 1, radius, glm::vec4(0, 0, 1, 1));
 	sbList.push_back(sbBall1);
@@ -72,7 +74,7 @@ void Application2D::CreateSoftBody(glm::vec2 coords) {
 	for (int x = 0; x < dimX; x++) {
 		for (int y = 0; y < dimY; y++) {
 			int position = (x * dimX) + y;
-			if (position + 1 < dimX * dimY && position + 1 != (x+1) * dimX) {
+			if (position + 1 < dimX * dimY && position + 1 != (x+1) * dimX) { // links along the y axis
 				Spring* spring1 = new Spring(sbList.at(position), sbList.at(position + 1), 2, 50, 0.0f);
 				m_physicsScene->AddActor(spring1);
 			}
@@ -139,7 +141,7 @@ void Application2D::update(float deltaTime) {
 	aie::Gizmos::clear();
 
 	// if the scene is unpaused, update the scene
-	if (running) {
+	if (running) { // if running is true, update the scene
 		m_physicsScene->Update(deltaTime);
 		std::cout << m_physicsScene->GetEnergy() << std::endl;
 	}
@@ -150,18 +152,18 @@ void Application2D::update(float deltaTime) {
 		float mouseY = (float)input->getMouseY();
 		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY)); // mouse coordinates for object spawning
 
-		if (spawner == 1) { // object 1, sphere
-			Sphere * mSphere = new Sphere(coords, glm::vec2(0, 0), 1, 4, glm::vec4(0, 0, 1, 1),1.0f, spawnKinematic);
+		if (spawnerID == 1) { // object 1, sphere
+			Sphere * mSphere = new Sphere(coords, glm::vec2(0, 0), 30, 4, glm::vec4(0, 0, 1, 1), 1.0f, spawnKinematic);
 			m_physicsScene->AddActor(mSphere);
 
-		} else if (spawner == 2) { // object 2, box
-			Box * mBox = new Box(coords, glm::vec2(3, 3), glm::vec2(0, 0), 1, spawnKinematic, glm::vec4(0, 1, 0, 1));
+		} else if (spawnerID == 2) { // object 2, box
+			Box * mBox = new Box(coords, glm::vec2(3, 3), glm::vec2(0, 0), 30, spawnKinematic, glm::vec4(0, 1, 0, 1));
 			m_physicsScene->AddActor(mBox);
 
-		} else if (spawner == 3) { // object 3, soft body "squishy square"
+		} else if (spawnerID == 3) { // object 3, soft body
 			CreateSoftBody(coords);
 
-		} else if (spawner == 4) { // object 4, rope
+		} else if (spawnerID == 4) { // object 4, rope
 			if (secondRopeNode) {
 				CreateRope(ropeStartPos, coords);
 				secondRopeNode = false;
@@ -172,7 +174,7 @@ void Application2D::update(float deltaTime) {
 		}
 	}
 
-	if (input->isMouseButtonDown(1)) {
+	if (input->isMouseButtonDown(1)) { // deletes rigidbodies within a small radius
 		float mouseX = (float)input->getMouseX();
 		float mouseY = (float)input->getMouseY();
 		glm::vec2 coords = WorldToGizmo(glm::vec2(mouseX, mouseY));
@@ -181,17 +183,17 @@ void Application2D::update(float deltaTime) {
 
 	// changes between the spawned object
 	if (input->wasKeyPressed(aie::INPUT_KEY_1)) {
-		spawner = 1;
+		spawnerID = 1;
 		secondRopeNode = false;
 	} else if (input->wasKeyPressed(aie::INPUT_KEY_2)) {
-		spawner = 2;
+		spawnerID = 2;
 		secondRopeNode = false;
 	} else if (input->wasKeyPressed(aie::INPUT_KEY_3)) {
-		spawner = 3;
+		spawnerID = 3;
 		secondRopeNode = false;
 	}
 	else if (input->wasKeyPressed(aie::INPUT_KEY_4)) {
-		spawner = 4;
+		spawnerID = 4;
 		secondRopeNode = false;
 	} else if (input->wasKeyPressed(aie::INPUT_KEY_W)) { // toggles spawn kinematics
 		if (spawnKinematic) {

@@ -20,7 +20,7 @@ PhysicsScene::~PhysicsScene() {
 void PhysicsScene::AddActor(PhysicsObject * actor) {
 	
 	Spring* spring = dynamic_cast<Spring*>(actor);
-	if (spring != nullptr) {
+	if (spring != nullptr) { // if the actor is a spring, add to the spring list as well
 		m_springs.push_back(spring);
 	}
 
@@ -36,14 +36,14 @@ void PhysicsScene::RemoveActor(PhysicsObject * actor) {
 	for (auto pSpring : m_springs) {
 		std::list<RigidBody*> sList = pSpring->GetBodies();
 		for (auto dt : sList) {
-			if (dt == actor) {
+			if (dt == actor) { // if a spring is attached to the actor, add spring to a hitlist
 				delSprings.push_back(pSpring);
 			}
 		}
 		for (auto del : delSprings) {
-			m_actors.remove(del);
+			m_actors.remove(del); // removes any springs on the hitlist
 		}
-		m_actors.remove(actor);
+		m_actors.remove(actor); // destroys the actor
 	}
 
 }
@@ -53,6 +53,7 @@ void PhysicsScene::Update(float deltaTime) {
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += deltaTime;
 	CheckForCollision();
+
 	for (auto pActor : m_actors) {
 		pActor->FixedUpdate(m_gravity, m_timeStep);
 	}
@@ -70,21 +71,21 @@ void PhysicsScene::RemoveObject(glm::vec2 position, float radius) {
 	for (auto pActor : m_actors) {
 		RigidBody* actor = dynamic_cast<RigidBody*>(pActor);
 
-		if (actor != nullptr) {
+		if (actor != nullptr) { // if the actor is a rigidbody, and within the deletion range, add it to the hitlist
 			if (glm::distance(actor->GetPosition(), position) < radius) {
 				deleteList.push_back(actor);
 			}
 		}
 	}
 	for (auto del : deleteList) {
-		RemoveActor(del);
+		RemoveActor(del); // remove every actor on the hitlist
 	}
 }
 
 // function pointer array for doing our collisions
 typedef bool(*fn)(PhysicsObject*, PhysicsObject*);
 
-static fn collisionFunctionArray[] = {
+static fn collisionFunctionArray[] = { // array of collision functions to be called
 	PhysicsScene::Plane2Plane, PhysicsScene::Plane2Sphere, PhysicsScene::Plane2Box,
 	PhysicsScene::Sphere2Plane, PhysicsScene::Sphere2Sphere,PhysicsScene::Sphere2Box,
 	PhysicsScene::Box2Plane, PhysicsScene::Box2Sphere,PhysicsScene::Box2Box
@@ -103,16 +104,16 @@ void PhysicsScene::CheckForCollision() {
 			int shapeId1 = object1->GetShapeID();
 			int shapeId2 = object2->GetShapeID();
 
-			if (shapeId1< 0 || shapeId2 < 0) {
+			if (shapeId1 < 0 || shapeId2 < 0) { // if the shapeID is SPRING, skip the test
 				continue;
 			}
 
 			// using funciton pointers
 			int functionIdx = (shapeId1 * SHAPE_COUNT) + shapeId2;
-			fn collisionFunctionsPtr = collisionFunctionArray[functionIdx];
+			fn collisionFunctionsPtr = collisionFunctionArray[functionIdx]; // the collision function to be called
 			if (collisionFunctionsPtr != nullptr) {
 				// did a collision occur?
-				collisionFunctionsPtr(object1, object2);
+				collisionFunctionsPtr(object1, object2); // calls the relevant collision function
 			}
 		}
 	}
@@ -152,11 +153,11 @@ bool PhysicsScene::Sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 		float intersection = sphere->GetRadius() - sphereToPlane;
 		if (intersection > 0) {
-			glm::vec2 contact = sphere->GetPosition() + (collisionNormal * -sphere->GetRadius());
+			glm::vec2 contact = sphere->GetPosition() + (collisionNormal * -sphere->GetRadius()); // sets the contact force
 
-			plane->ResolveCollision(sphere, contact);
+			plane->ResolveCollision(sphere, contact); // applies contact force
 
-			sphere->Nudge(collisionNormal * intersection);
+			sphere->Nudge(collisionNormal * intersection); // moves sphere outside of plane
 
 		}
 	}
@@ -170,28 +171,27 @@ bool PhysicsScene::Sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 
 	// if we are successful then test for collision
 	if (sphere1 != nullptr && sphere2 != nullptr) {
+		// checks if both spheres are in the same quarter
 		if ((sphere1->GetPosition().x - sphere1->GetRadius() < 0 && sphere2->GetPosition().x - sphere2->GetRadius() < 0) || (sphere1->GetPosition().x + sphere1->GetRadius() > 0 && sphere2->GetPosition().x + sphere2->GetRadius() > 0)) {
 			if ((sphere1->GetPosition().y - sphere1->GetRadius() < 0 && sphere2->GetPosition().y - sphere2->GetRadius() < 0) || (sphere1->GetPosition().y + sphere1->GetRadius() > 0 && sphere2->GetPosition().y + sphere2->GetRadius() > 0)) {
+				
 				float dist = glm::distance(sphere1->GetPosition(), sphere2->GetPosition());
 				float radii = sphere1->GetRadius() + sphere2->GetRadius();
 
-				// delt pos + pos
 				glm::vec2 delta = sphere2->GetPosition() - sphere1->GetPosition();
 
 				if (dist <= radii) {
 
 					// contact force
-
 					glm::vec2 contactForce = (dist - (radii)) * (delta/dist);
 
-					if (!sphere1->IsKinematic() && !sphere2->IsKinematic()) {
+					// applies contact forces as necessary
+					if (!sphere1->IsKinematic() && !sphere2->IsKinematic()) { // if neither are kinematic, moves both spheres away from eachother
 						sphere1->Nudge(contactForce * 0.5f);
 						sphere2->Nudge(-contactForce * 0.5f);
-					}
-					else if (!sphere1->IsKinematic()) {
+					} else if (!sphere1->IsKinematic()) { // if sphere2 is kinematic, moves sphere1 outside sphere2
 						sphere1->Nudge(contactForce);
-					}
-					else {
+					} else { // if sphere1 is kinematic, moves sphere2 outside sphere1
 						sphere2->Nudge(-contactForce);
 					}
 						sphere1->ResolveCollision(sphere2, 0.5f * (sphere1->GetPosition() + sphere2->GetPosition()));
@@ -270,14 +270,9 @@ bool PhysicsScene::Box2Plane(PhysicsObject* obj1, PhysicsObject* obj2) {
 			// work out the "effective mass"  this is  a combination of moment of inertia and mass, and tells us how much the contact point velocity will change with the force we're applying
 			float mass0 = 1.0f / (1.0f / box->GetMass() + (r*r) / box->GetMoment());
 
-			// and appky the force
-			float keBefore = box->GetLinearEnergy();
-			float krBefore = box->GetRotationalEnergy();
-			box->ApplyForce(acceleration * mass0, localContact);
-			box->Nudge(-plane->GetNormal() * penetration);
+			box->ApplyForce(acceleration * mass0, localContact); // applies the contact force
 
-			float keAfter = box->GetLinearEnergy();
-			float krAfter = box->GetRotationalEnergy();
+			box->Nudge(-plane->GetNormal() * penetration); // moves the box outside the plane
 
 			return true;
 		}
@@ -311,6 +306,8 @@ bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 		glm::vec2* direction = nullptr;
 		// get the local position of the circle centre
 		glm::vec2 localPos(glm::dot(box->GetLocalX(), circlePos), glm::dot(box->GetLocalY(), circlePos));
+
+		// gets the box corners being touched
 		if (localPos.y < h2 && localPos.y > -h2) {
 			if (localPos.x > 0 && localPos.x < w2 + sphere->GetRadius()) {
 				numContacts++;
@@ -354,16 +351,17 @@ bool PhysicsScene::Box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2) {
 			box->ResolveCollision(sphere, contact, direction);
 			
 			// move each shape away in the direction of penetration
-			if (!box->IsKinematic() && !sphere->IsKinematic()) {
+			if (!box->IsKinematic() && !sphere->IsKinematic()) { // if neither is kinematic, moves both outside each other
 				box->Nudge(penVec * 0.5f);
 				sphere->Nudge(-penVec * 0.5f);
-			} else if (!box->IsKinematic()) {
+			} else if (!box->IsKinematic()) { // if sphere is kinematic, moves box outside
 				box->Nudge(penVec);
-			} else {
+			} else { // if box is kinematic, moves sphere outside
 				sphere->Nudge(-penVec);
 			}
 		}
 		delete direction;
+		return true;
 	}
 	return false;
 }
@@ -390,22 +388,20 @@ bool PhysicsScene::Box2Box(PhysicsObject* obj1, PhysicsObject* obj2) {
 				if (pen > 0) {
 					// apply contact forces
 					glm::vec2 displacement = pen * norm;
-					if (!box1->IsKinematic() && !box2->IsKinematic()) {
+					if (!box1->IsKinematic() && !box2->IsKinematic()) { // if neither is kinematic, moves both outside each other
 						box1->Nudge(-displacement * 0.5f);
 						box2->Nudge(displacement * 0.5f);
-					}
-					else if (!box1->IsKinematic()) {
+					} else if (!box1->IsKinematic()) { // if box2 is kinematic, moves box1 outside
 						box1->Nudge(-displacement);
-					}
-					else {
+					} else { // if box1 is kinematic, moves box2 outside
 						box2->Nudge(displacement);
 					}
 					box1->ResolveCollision(box2, contact / float(numContacts), &norm);
 
 				}
-				return true;
 			}
 		}
+				return true;
 	}
 	return false;
 }

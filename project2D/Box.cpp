@@ -52,11 +52,13 @@ bool Box::CheckBoxCorners(Box& box, glm::vec2& contact, int& numContacts, float 
 	glm::vec2 localContact(0, 0);
 
 	bool first = true;
+	// for the four corners of the box
 	for (float x = -box.GetExtents().x; x < boxW; x += boxW) {
 		for (float y = -box.GetExtents().y; y < boxH; y += boxH) {
 
 			// position in worldspace
 			glm::vec2 p = box.GetPosition() + x * box.GetLocalX() + y * box.GetLocalY();
+
 			// position in our box's space
 			glm::vec2 p0(glm::dot(p - m_position, m_localX), glm::dot(p - m_position, m_localY));
 

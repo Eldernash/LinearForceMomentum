@@ -28,6 +28,7 @@ public:
 
 	float GetTimeStep() const { return m_timeStep; }
 	float GetEnergy();
+
 	std::list<PhysicsObject*> GetActors() { return m_actors; }
 
 	void CheckForCollision();
